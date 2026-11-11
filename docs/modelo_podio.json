@@ -1,0 +1,119 @@
+{
+  "variables": [
+    "posicion_salida",
+    "puntos_piloto_previos",
+    "puntos_escuderia_previos",
+    "podios_ultimas_5",
+    "pos_promedio_ultimas_5"
+  ],
+  "umbral": 0.6,
+  "medianas": [
+    11.0,
+    18.0,
+    37.0,
+    0.0,
+    11.0
+  ],
+  "medias": [
+    10.568121533638775,
+    49.18398842536774,
+    98.3694236797685,
+    0.7318543525440078,
+    10.633346997829756
+  ],
+  "desviaciones": [
+    5.791188138845096,
+    72.34790406619273,
+    140.21970001990863,
+    1.3303801226736458,
+    4.289118435401209
+  ],
+  "coeficientes": [
+    -1.9185144280477329,
+    0.11404051551712702,
+    0.06805269261291463,
+    0.37356851369705874,
+    -0.4786667568778044
+  ],
+  "intercepto": -3.5612269433048307,
+  "metricas": {
+    "matriz_confusion_050": [
+      [
+        383,
+        24
+      ],
+      [
+        28,
+        44
+      ]
+    ],
+    "roc_auc_modelo": 0.924924924924925,
+    "roc_auc_baseline": 0.9205739830739831,
+    "estrategias": {
+      "Nadie hace podio": {
+        "exactitud": 0.8496868475991649,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "Baseline: salen top 3": {
+        "exactitud": 0.8997912317327766,
+        "precision": 0.6666666666666666,
+        "recall": 0.6666666666666666,
+        "f1": 0.6666666666666666
+      },
+      "Modelo (umbral 0.50)": {
+        "exactitud": 0.8914405010438413,
+        "precision": 0.6470588235294118,
+        "recall": 0.6111111111111112,
+        "f1": 0.6285714285714286
+      },
+      "Modelo (umbral 0.60)": {
+        "exactitud": 0.8893528183716075,
+        "precision": 0.6666666666666666,
+        "recall": 0.5277777777777778,
+        "f1": 0.5891472868217055
+      }
+    },
+    "apuestas_umbral": 57,
+    "aciertos_umbral": 38
+  },
+  "casos": [
+    {
+      "caso": "A. Favorito claro: sale 1, lider del campeonato, 4 podios seguidos",
+      "datos": {
+        "posicion_salida": 1,
+        "puntos_piloto_previos": 300,
+        "puntos_escuderia_previos": 500,
+        "podios_ultimas_5": 4,
+        "pos_promedio_ultimas_5": 2.0
+      },
+      "probabilidad": 0.88894097453987,
+      "apostar": true
+    },
+    {
+      "caso": "B. Caso parejo: sale 4, buen equipo, 2 podios recientes",
+      "datos": {
+        "posicion_salida": 4,
+        "puntos_piloto_previos": 180,
+        "puntos_escuderia_previos": 350,
+        "podios_ultimas_5": 2,
+        "pos_promedio_ultimas_5": 5.0
+      },
+      "probabilidad": 0.48195126756697637,
+      "apostar": false
+    },
+    {
+      "caso": "C. Sin opciones: sale 15, equipo de mitad de tabla, sin podios",
+      "datos": {
+        "posicion_salida": 15,
+        "puntos_piloto_previos": 12,
+        "puntos_escuderia_previos": 30,
+        "podios_ultimas_5": 0,
+        "pos_promedio_ultimas_5": 13.0
+      },
+      "probabilidad": 0.0037180031472739163,
+      "apostar": false
+    }
+  ]
+}

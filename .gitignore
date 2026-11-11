@@ -1,0 +1,15 @@
+# Datos originales de Kaggle y almacen SQLite: se regeneran (ver README)
+data/raw/
+data/f1.sqlite
+*.sqlite-journal
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Archivos temporales de Office y del sistema
+~$*
+Thumbs.db
+.DS_Store

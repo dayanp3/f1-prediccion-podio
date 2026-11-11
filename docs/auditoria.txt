@@ -1,0 +1,96 @@
+AUDITORIA DEL ALMACEN f1.sqlite
+
+======================================================================
+1. INTEGRIDAD: las llaves de results existen en los catalogos?
+======================================================================
+                             relacion  huerfanos
+              results.raceId -> races          0
+          results.driverId -> drivers          0
+results.constructorId -> constructors          0
+0 huerfanos = todos los JOIN van a cruzar sin perder filas.
+
+======================================================================
+2. NULOS por columna en results (tabla central)
+======================================================================
+        columna  nulos  porcentaje
+       resultId      0        0.00
+         raceId      0        0.00
+       driverId      0        0.00
+  constructorId      0        0.00
+         number      6        0.02
+           grid      0        0.00
+       position  10953       40.93
+   positionText      0        0.00
+  positionOrder      0        0.00
+         points      0        0.00
+           laps      0        0.00
+           time  19079       71.30
+   milliseconds  19079       71.30
+     fastestLap  18507       69.16
+           rank  18249       68.20
+ fastestLapTime  18507       69.16
+fastestLapSpeed  18507       69.16
+       statusId      0        0.00
+Total de filas: 26,759
+position nula = el piloto no termino la carrera (abandono, descalificado).
+
+======================================================================
+3. ANOMALIAS por decada
+======================================================================
+ decada  carreras  filas  salida_en_0  piloto_repetido  carreras_sin_3_podios
+   1950        84   2007           68               79                     17
+   1960       100   2113          198                5                      1
+   1970       144   3807          351                1                      0
+   1980       156   4503          571                0                      0
+   1990       162   4250          357                0                      0
+   2000       174   3643            8                0                      0
+   2010       198   4297           28                0                      0
+   2020       107   2139           57                0                      0
+salida_en_0: grid = 0 no es una posicion real (el piloto salio desde el pit lane).
+piloto_repetido: entre 1950 y 1978 un piloto podia aparecer dos veces en una carrera.
+carreras_sin_3_podios: autos compartidos en los 50, mas de 3 pilotos en el podio.
+
+======================================================================
+4. COBERTURA por temporada (2010 en adelante)
+======================================================================
+ temporada  carreras  filas  pilotos_por_carrera  salida_en_0  podios  max_puntos
+      2010        19    456                 24.0            0      57        25.0
+      2011        19    456                 24.0            3      57        25.0
+      2012        20    480                 24.0            3      60        25.0
+      2013        19    418                 22.0            0      57        25.0
+      2014        19    407                 21.4            0      57        50.0
+      2015        19    378                 19.9            3      57        25.0
+      2016        21    462                 22.0            4      63        25.0
+      2017        20    400                 20.0            2      60        25.0
+      2018        21    420                 20.0            1      63        25.0
+      2019        21    420                 20.0           12      63        26.0
+      2020        17    340                 20.0            5      51        26.0
+      2021        22    440                 20.0           12      66        26.0
+      2022        22    440                 20.0           11      66        26.0
+      2023        22    440                 20.0           18      66        26.0
+      2024        24    479                 20.0           11      72        26.0
+max_puntos = 50 en 2014: la ultima carrera de esa temporada dio puntos dobles.
+
+======================================================================
+5. DECISION: temporadas 2014 a 2024 (era hibrida)
+======================================================================
+ filas  carreras  pilotos  escuderias  salida_en_0  podios
+  4626       228       59          20           79     684
+Salidas en 0 a tratar como nulo: 1.71% de las filas.
+Filas con podio (clase positiva): 14.79%.
+
+Faltan datos de campeonato para alguna fila de la era?
+ sin_puntos_piloto  sin_puntos_escuderia
+                 0                     0
+
+Tasa de podio segun la posicion de salida (primeras 8 y pit lane):
+ salida  veces  pct_podio
+      0     79        0.0
+      1    228       80.7
+      2    226       71.2
+      3    228       54.8
+      4    228       34.2
+      5    228       16.7
+      6    228       14.5
+      7    227        6.6
+      8    227        3.1

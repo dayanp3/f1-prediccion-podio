@@ -1,0 +1,1011 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Predicción de podio F1</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Titillium+Web:ital,wght@0,600;0,700;1,700&display=swap">
+<style>
+/* Layout: banda oscura de cabecera (título, auto y semáforo de 5 luces = 5 etapas) con pestañas; cada vista vive en una columna de 1200px. Recorrido = flujo clicable + panel fijo; Simulador = controles + resultado; El auto = ilustración con puntos clicables. */
+:root {
+  --bg: #0d0e12;
+  --surface: #16181e;
+  --surface-2: #1f222a;
+  --ink: #f3f4f6;
+  --muted: #a0a6b3;
+  --line: #2b2f39;
+  --line-strong: #515766;
+  --accent: #ff4a3d;
+  --accent-strong: #cf2a1c;
+  --accent-soft: #3b1613;
+  --on-accent: #ffffff;
+  --purple: #b98cff;
+  --green: #3ddc84;
+  --green-soft: #11301f;
+  --yellow: #f5c542;
+  --yellow-soft: #3a2e0e;
+  --code-bg: #090a0d;
+  /* La banda y el escenario del auto son siempre oscuros, en ambos temas */
+  --band-bg: #0b0c0f;
+  --band-ink: #f3f4f6;
+  --band-muted: #a0a6b3;
+  --band-line: #2b2f39;
+  --light-off: #2a1210;
+  --light-on: #ff2d20;
+  --car-body: #e8352b;
+  --car-stripe: #ffffff;
+  --car-carbon: #1c1f27;
+  --car-carbon2: #2e333f;
+  --car-dark: #07080a;
+  --car-helmet: #f5c542;
+  --car-tire: #14161b;
+  --car-tire-edge: #3a3f4b;
+  --car-rim: #3d4350;
+  --car-compound: #f5c542;
+  --car-light: #ff3b30;
+  --car-shadow: rgba(0, 0, 0, 0.55);
+  --font-display: "Titillium Web", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f0f1f3; --surface: #ffffff; --surface-2: #f5f6f8; --ink: #14161b; --muted: #596070;
+    --line: #d5d8df; --line-strong: #979dab; --accent: #d42a20; --accent-soft: #fbe6e4;
+    --purple: #6f35c9; --green: #157a45; --green-soft: #dff2e6; --yellow: #8a6200; --yellow-soft: #faefd0;
+    --code-bg: #eceef2;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f0f1f3; --surface: #ffffff; --surface-2: #f5f6f8; --ink: #14161b; --muted: #596070;
+  --line: #d5d8df; --line-strong: #979dab; --accent: #d42a20; --accent-soft: #fbe6e4;
+  --purple: #6f35c9; --green: #157a45; --green-soft: #dff2e6; --yellow: #8a6200; --yellow-soft: #faefd0;
+  --code-bg: #eceef2;
+  color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+h1, h2, h3, p, ul, dl, dd, figure { margin: 0; }
+ul { padding-left: 1.15em; }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.wrap {
+  max-width: 1200px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* ---------- Banda de cabecera ---------- */
+.band { background: var(--band-bg); color: var(--band-ink); }
+.band .wrap { padding-block: 26px 0; display: flex; flex-direction: column; gap: 20px; }
+.band-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: center; }
+.headline { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.eyebrow { font-family: var(--font-display); font-size: 13px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--band-muted); }
+.eyebrow b { color: var(--light-on); font-weight: 700; }
+.band h1 {
+  font-family: var(--font-display); font-weight: 700; font-style: italic; text-transform: uppercase;
+  font-size: clamp(30px, 5vw, 54px); line-height: 0.98; letter-spacing: -0.005em; text-wrap: balance;
+}
+.lede { color: var(--band-muted); max-width: 56ch; font-size: 16px; }
+.hero-car { width: 100%; height: auto; display: block; }
+.gantry { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.lights { display: flex; gap: 8px; padding: 8px 10px; background: #000000; border: 1px solid var(--band-line); border-radius: 8px; }
+.light { width: 22px; height: 22px; border-radius: 50%; background: var(--light-off); transition: background 0.2s ease, box-shadow 0.2s ease; }
+.light.on { background: var(--light-on); box-shadow: 0 0 12px 2px color-mix(in srgb, var(--light-on) 65%, transparent); }
+.gantry-text { font-family: var(--font-display); font-weight: 600; font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--band-muted); }
+.gantry-text b { color: var(--band-ink); }
+.tabs { display: flex; gap: 2px; flex-wrap: wrap; }
+.tab {
+  background: none; border: 0; border-top: 3px solid transparent; padding: 11px 18px 12px; cursor: pointer;
+  font-family: var(--font-display); font-weight: 700; font-style: italic; font-size: 16px; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--band-muted); border-radius: 0;
+}
+.tab:hover { color: var(--band-ink); }
+.tab[aria-selected="true"] { background: var(--bg); color: var(--ink); border-top-color: var(--light-on); }
+.chequered {
+  height: 14px;
+  background:
+    repeating-conic-gradient(var(--ink) 0% 25%, transparent 0% 50%) 0 0 / 14px 14px;
+  opacity: 0.16;
+}
+
+/* ---------- Estructura de vistas ---------- */
+main.wrap { padding-block: 26px 60px; }
+.view { display: flex; flex-direction: column; gap: 22px; }
+.hint { color: var(--muted); font-size: 14px; max-width: 80ch; }
+.sec { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.sec > h2 {
+  font-family: var(--font-display); font-weight: 700; font-style: italic; text-transform: uppercase;
+  font-size: 23px; line-height: 1.1; letter-spacing: 0.01em; text-wrap: balance;
+}
+.sec > p { max-width: 72ch; color: var(--muted); }
+.stack { display: flex; flex-direction: column; gap: 34px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; min-width: 0; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+th { font-family: var(--font-display); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; white-space: nowrap; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); white-space: nowrap; }
+th.num { font-family: var(--font-display); }
+td.mono { font-family: var(--font-mono); font-size: 12.5px; white-space: nowrap; }
+pre { margin: 0; background: var(--code-bg); border-radius: 6px; padding: 12px 14px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6; }
+code { font-family: var(--font-mono); font-size: 0.92em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+pre code { background: none; padding: 0; font-size: inherit; }
+.vname { font-family: var(--font-mono); font-weight: 600; font-size: 13px; white-space: nowrap; }
+.btn {
+  border: 1.5px solid var(--line-strong); background: var(--surface); border-radius: 4px; padding: 7px 13px; cursor: pointer;
+  font-family: var(--font-display); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.btn:hover:not(:disabled) { border-color: var(--ink); }
+.btn:disabled { opacity: 0.4; cursor: default; }
+.btn.primary { background: var(--accent-strong); border-color: var(--accent-strong); color: var(--on-accent); }
+.btn.primary:hover:not(:disabled) { border-color: var(--accent-strong); filter: brightness(1.12); }
+.btn.is-on { border-color: var(--accent); background: var(--accent-soft); }
+
+/* ---------- Recorrido ---------- */
+.split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 28px; align-items: start; }
+.flow { display: flex; flex-direction: column; align-items: stretch; min-width: 0; }
+.stage { border: 1px solid var(--line); border-left: 4px solid var(--line-strong); border-radius: 6px; padding: 12px 14px 14px; display: flex; flex-direction: column; background: var(--surface); }
+.stage.is-current { border-left-color: var(--accent); }
+.stage-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.stage-title { font-family: var(--font-display); font-weight: 700; font-style: italic; font-size: 17px; text-transform: uppercase; letter-spacing: 0.02em; }
+.stage-title span { color: var(--accent); margin-right: 6px; }
+.stage-script { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); }
+.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(98px, 1fr)); gap: 10px; }
+.node {
+  display: flex; flex-direction: column; gap: 3px; align-items: center; justify-content: center; text-align: center;
+  min-height: 60px; padding: 9px 12px; border-radius: 4px; cursor: pointer; min-width: 0;
+  background: var(--surface-2); border: 1.5px solid var(--line-strong);
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+.node:hover { transform: translateY(-1px); border-color: var(--ink); }
+.node-title { font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
+.node-sub { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.node.is-data { background: var(--ink); border-color: var(--ink); color: var(--bg); border-radius: 22px / 14px; }
+.node.is-data .node-sub { color: color-mix(in srgb, var(--bg) 70%, var(--ink)); font-family: var(--font-mono); font-size: 11.5px; }
+.node.is-active { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent); }
+.node.is-active .node-sub { color: var(--muted); }
+.arrow { width: 2px; height: 20px; background: var(--line-strong); margin: 0 auto; position: relative; flex: none; }
+.arrow::after { content: ""; position: absolute; left: 50%; bottom: -1px; transform: translateX(-50%); border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 7px solid var(--line-strong); }
+
+.panel {
+  position: sticky; top: calc(12px + env(safe-area-inset-top, 0px)); max-height: calc(100vh - 24px); overflow: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; min-width: 0; display: flex; flex-direction: column;
+}
+.panel-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.step { font-family: var(--font-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.step b { color: var(--ink); font-size: 16px; }
+.panel-body { padding: 18px 18px 22px; display: flex; flex-direction: column; gap: 18px; }
+.panel-stage { font-family: var(--font-display); font-size: 13px; color: var(--accent); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.panel h2 { font-family: var(--font-display); font-weight: 700; font-size: 28px; line-height: 1.1; text-wrap: balance; overflow-wrap: anywhere; }
+.block { display: flex; flex-direction: column; gap: 6px; }
+.block h3, .label { font-family: var(--font-display); font-size: 12.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.block p, .block li { max-width: 66ch; }
+.block ul { display: flex; flex-direction: column; gap: 5px; }
+.simple { font-size: 16.5px; line-height: 1.5; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+.fact { border-left: 3px solid var(--line-strong); padding: 2px 0 2px 10px; }
+.fact dt { font-size: 12px; color: var(--muted); }
+.fact dd { font-family: var(--font-mono); font-weight: 600; font-size: 17px; font-variant-numeric: tabular-nums; }
+.example { border: 1px solid var(--line); border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 8px; background: var(--surface-2); }
+.example-tag { font-family: var(--font-display); font-size: 12.5px; font-weight: 700; color: var(--purple); letter-spacing: 0.06em; text-transform: uppercase; }
+.note { border-left: 3px solid var(--yellow); background: var(--yellow-soft); padding: 9px 12px; border-radius: 0 6px 6px 0; font-size: 14px; }
+
+/* ---------- Variables ---------- */
+.target { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 6px; padding: 16px 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; align-items: center; }
+.target-name { font-family: var(--font-mono); font-weight: 600; font-size: 28px; }
+.target p { color: var(--muted); }
+.grid-lane { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 18px; max-width: 520px; }
+.slot { border: 2px solid var(--line-strong); border-bottom: 0; border-radius: 4px 4px 0 0; padding: 8px 12px 10px; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.slot:nth-child(even) { transform: translateY(22px); }
+.slot-pos { font-family: var(--font-display); font-weight: 700; font-style: italic; font-size: 20px; }
+.slot-pct { font-family: var(--font-mono); font-weight: 600; font-size: 17px; font-variant-numeric: tabular-nums; }
+.slot.is-podium { border-color: var(--accent); }
+.grid-foot { margin-top: 26px; color: var(--muted); font-size: 14px; max-width: 72ch; }
+
+/* ---------- Simulador ---------- */
+.sim { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.presets { display: flex; gap: 8px; flex-wrap: wrap; }
+.controls { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 20px; }
+.control { display: flex; flex-direction: column; gap: 6px; }
+.control-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.control-head label { font-weight: 600; }
+.control-val { font-family: var(--font-mono); font-weight: 600; font-size: 17px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.control small { color: var(--muted); font-size: 13px; }
+.control input[type="range"] { width: 100%; accent-color: var(--accent-strong); }
+.check { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--muted); }
+.check input { accent-color: var(--accent-strong); width: 16px; height: 16px; }
+.result { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 18px; position: sticky; top: calc(12px + env(safe-area-inset-top, 0px)); min-width: 0; }
+.prob { font-family: var(--font-display); font-weight: 700; font-style: italic; font-size: clamp(54px, 9vw, 84px); line-height: 0.95; font-variant-numeric: tabular-nums; }
+.meter { position: relative; height: 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 5px; margin-top: 4px; }
+.meter-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--muted); transition: width 0.15s ease; }
+.meter-fill.go { background: var(--green); }
+.meter-tick { position: absolute; left: 60%; top: -7px; bottom: -7px; width: 2px; background: var(--ink); }
+.meter-scale { position: relative; height: 18px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.meter-scale span { position: absolute; top: 4px; }
+.meter-scale .t60 { left: 60%; transform: translateX(-50%); color: var(--ink); white-space: nowrap; }
+.decision { display: inline-flex; align-items: center; gap: 10px; align-self: flex-start; padding: 9px 16px; border-radius: 4px; font-family: var(--font-display); font-weight: 700; font-style: italic; font-size: 20px; letter-spacing: 0.04em; text-transform: uppercase; border: 2px solid var(--line-strong); background: var(--surface-2); }
+.decision.go { border-color: var(--green); background: var(--green-soft); }
+.decision-icon { font-style: normal; }
+.real { font-size: 14px; color: var(--muted); }
+.formula { font-family: var(--font-mono); font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+
+/* ---------- El auto ---------- */
+.garage { background: var(--band-bg); border: 1px solid var(--band-line); border-radius: 8px; overflow: hidden; }
+.garage-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 14px; border-bottom: 1px solid var(--band-line); color: var(--band-muted); font-size: 13.5px; }
+.garage-bar label { font-family: var(--font-display); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.garage-bar input[type="range"] { accent-color: var(--light-on); width: min(260px, 50vw); }
+.garage-bar output { font-family: var(--font-mono); color: var(--band-ink); }
+.car-stage { overflow: auto; max-height: 72vh; }
+.car-big { display: block; width: 100%; height: auto; min-width: 640px; }
+.hot { cursor: pointer; }
+.hot circle.dot { fill: #ffffff; stroke: var(--car-dark); stroke-width: 3; }
+.hot text { font-family: var(--font-display); font-weight: 700; font-size: 20px; fill: #0b0c0f; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.hot circle.ring { fill: none; stroke: #ffffff; stroke-width: 2; opacity: 0.45; }
+.hot:hover circle.dot, .hot.is-active circle.dot { fill: var(--light-on); }
+.hot:hover text, .hot.is-active text { fill: #ffffff; }
+.hot:focus-visible circle.ring { stroke: var(--light-on); opacity: 1; stroke-width: 4; }
+.hot:focus { outline: none; }
+.parts { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 22px; align-items: start; }
+.part-list { display: flex; flex-direction: column; gap: 6px; }
+.part-btn { display: flex; align-items: center; gap: 10px; text-align: left; background: var(--surface); border: 1.5px solid var(--line); border-radius: 4px; padding: 8px 12px; cursor: pointer; font-weight: 600; }
+.part-btn:hover { border-color: var(--ink); }
+.part-btn.is-active { border-color: var(--accent); background: var(--accent-soft); }
+.part-n { font-family: var(--font-display); font-weight: 700; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); color: var(--bg); display: inline-flex; align-items: center; justify-content: center; flex: none; font-size: 14px; }
+.part-card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.part-card h3 { font-family: var(--font-display); font-weight: 700; font-size: 26px; line-height: 1.1; }
+.part-card p { max-width: 62ch; font-size: 16px; }
+.link-proj { border-left: 3px solid var(--purple); padding: 4px 0 4px 12px; }
+.link-proj .label { color: var(--purple); }
+.glossary { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.term { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+.term dt { font-family: var(--font-display); font-weight: 700; font-size: 18px; }
+.term dd { color: var(--muted); }
+.term .vname { color: var(--purple); }
+
+@media (max-width: 860px) {
+  .band-top, .split, .sim, .parts { grid-template-columns: minmax(0, 1fr); }
+  .panel, .result { position: static; max-height: none; }
+  .tab { padding: 10px 12px 11px; font-size: 14.5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .node, .light, .meter-fill { transition: none; }
+  .node:hover { transform: none; }
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<symbol id="car" viewBox="0 0 1260 400">
+  <!-- sombra -->
+  <ellipse cx="620" cy="343" rx="560" ry="9" fill="var(--car-shadow)"/>
+  <!-- aleron trasero -->
+  <path d="M250 262 L168 214 L160 226 L236 276 Z" fill="var(--car-carbon)"/>
+  <path d="M66 176 C100 168 140 166 178 170 L180 182 C142 178 102 180 68 188 Z" fill="var(--car-carbon)"/>
+  <path d="M62 156 C98 146 142 144 182 150 L184 164 C144 158 100 160 64 170 Z" fill="var(--car-body)"/>
+  <path d="M78 150 L176 146 L196 304 L150 304 L112 262 Z" fill="var(--car-carbon2)"/>
+  <path d="M84 156 L170 152 L176 200 L96 214 Z" fill="var(--car-body)"/>
+  <path d="M128 268 C150 262 178 262 204 266 L204 276 C178 272 150 272 130 278 Z" fill="var(--car-carbon)"/>
+  <!-- suelo y difusor -->
+  <path d="M236 300 L300 316 L905 316 L930 322 L300 326 L210 304 Z" fill="var(--car-carbon)"/>
+  <!-- cuerpo principal: caja de cambios, capo motor, toma de aire, monocasco y nariz -->
+  <path d="M212 296 L216 264 C300 250 392 208 474 170 L522 150 L566 148 L580 170 L592 202 L712 214 C810 222 910 244 1016 270 L1128 294 L1138 302 L1106 308 C1010 304 900 302 830 304 L770 316 L330 316 Z" fill="var(--car-body)"/>
+  <!-- franja -->
+  <path d="M232 262 C310 246 398 206 480 168 L522 150 L540 149 L548 160 C460 196 360 246 250 276 Z" fill="var(--car-stripe)"/>
+  <path d="M740 219 C830 228 920 248 1016 272 L1120 294 L1124 299 C1020 280 900 252 742 228 Z" fill="var(--car-stripe)"/>
+  <!-- toma de aire -->
+  <path d="M556 152 L572 151 L582 172 L566 172 Z" fill="var(--car-dark)"/>
+  <path d="M532 146 L552 146 L552 138 L546 138 L546 130 L540 130 L540 138 L532 138 Z" fill="var(--car-carbon)"/>
+  <!-- ponton -->
+  <path d="M676 238 L604 234 C520 236 430 256 322 296 L322 316 L690 316 L700 266 Z" fill="var(--car-carbon2)"/>
+  <path d="M676 240 L700 266 L694 296 L672 288 Z" fill="var(--car-dark)"/>
+  <path d="M340 300 C440 268 520 250 604 246" fill="none" stroke="var(--car-body)" stroke-width="5" stroke-linecap="round"/>
+  <!-- bargeboard / borde de suelo -->
+  <path d="M720 316 L760 286 L790 286 L812 316 Z" fill="var(--car-carbon)"/>
+  <!-- cockpit: casco -->
+  <path d="M592 202 L712 214 L706 222 L596 214 Z" fill="var(--car-dark)"/>
+  <circle cx="646" cy="198" r="22" fill="var(--car-helmet)"/>
+  <path d="M650 188 C660 188 667 193 668 201 L650 204 Z" fill="var(--car-dark)"/>
+  <path d="M626 205 C636 211 652 212 664 208 L662 216 L630 214 Z" fill="var(--car-dark)"/>
+  <!-- reposacabezas -->
+  <path d="M584 176 L612 186 L620 212 L592 204 Z" fill="var(--car-carbon2)"/>
+  <!-- halo -->
+  <path d="M748 219 C724 190 700 184 668 184 L598 188" fill="none" stroke="var(--car-carbon)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M700 186 L712 214" fill="none" stroke="var(--car-carbon)" stroke-width="5" stroke-linecap="round"/>
+  <!-- espejo -->
+  <path d="M716 200 L742 198 L744 210 L718 212 Z" fill="var(--car-carbon)"/>
+  <!-- suspension delantera -->
+  <path d="M860 250 L966 262 M872 292 L966 276 M840 262 L966 270" fill="none" stroke="var(--car-carbon)" stroke-width="5" stroke-linecap="round"/>
+  <!-- suspension trasera -->
+  <path d="M330 262 L240 262 M340 292 L240 276" fill="none" stroke="var(--car-carbon)" stroke-width="5" stroke-linecap="round"/>
+  <!-- aleron delantero -->
+  <path d="M1096 306 L1112 306 L1108 322 L1088 322 Z" fill="var(--car-carbon)"/>
+  <path d="M1040 320 C1100 324 1150 320 1206 308 L1206 316 C1150 330 1100 332 1040 328 Z" fill="var(--car-carbon)"/>
+  <path d="M1052 310 C1100 312 1140 308 1180 298 L1182 305 C1140 316 1100 319 1052 317 Z" fill="var(--car-body)"/>
+  <path d="M1066 300 C1100 301 1130 297 1160 289 L1162 295 C1130 304 1100 307 1066 306 Z" fill="var(--car-carbon)"/>
+  <path d="M1160 282 L1210 296 L1210 330 L1160 330 Z" fill="var(--car-carbon2)"/>
+  <path d="M1166 290 L1204 300 L1204 312 L1166 306 Z" fill="var(--car-body)"/>
+  <!-- luz trasera -->
+  <rect x="206" y="270" width="10" height="20" rx="2" fill="var(--car-light)"/>
+  <!-- numero -->
+    <text x="430" y="296" style="font-family: var(--font-display); font-size: 34px; font-weight: 700; font-style: italic" fill="var(--car-stripe)" letter-spacing="2">PODIO</text>
+  <!-- ruedas -->
+  <g>
+    <circle cx="240" cy="268" r="72" fill="var(--car-tire)" stroke="var(--car-tire-edge)" stroke-width="2"/>
+    <circle cx="240" cy="268" r="59" fill="none" stroke="var(--car-compound)" stroke-width="5"/>
+    <circle cx="240" cy="268" r="46" fill="var(--car-rim)"/>
+    <circle cx="240" cy="268" r="46" fill="none" stroke="var(--car-carbon)" stroke-width="3"/>
+    <path d="M240 226 L240 310 M198 268 L282 268 M210 238 L270 298 M270 238 L210 298" stroke="var(--car-carbon)" stroke-width="3" opacity="0.55"/>
+    <circle cx="240" cy="268" r="13" fill="var(--car-carbon)"/>
+    <circle cx="240" cy="268" r="5" fill="var(--car-body)"/>
+  </g>
+  <g>
+    <circle cx="966" cy="268" r="72" fill="var(--car-tire)" stroke="var(--car-tire-edge)" stroke-width="2"/>
+    <circle cx="966" cy="268" r="59" fill="none" stroke="var(--car-compound)" stroke-width="5"/>
+    <circle cx="966" cy="268" r="46" fill="var(--car-rim)"/>
+    <circle cx="966" cy="268" r="46" fill="none" stroke="var(--car-carbon)" stroke-width="3"/>
+    <path d="M966 226 L966 310 M924 268 L1008 268 M936 238 L996 298 M996 238 L936 298" stroke="var(--car-carbon)" stroke-width="3" opacity="0.55"/>
+    <circle cx="966" cy="268" r="13" fill="var(--car-carbon)"/>
+    <circle cx="966" cy="268" r="5" fill="var(--car-body)"/>
+  </g>
+</symbol>
+
+</svg>
+
+<header class="band">
+  <div class="wrap">
+    <div class="band-top">
+      <div class="headline">
+        <p class="eyebrow"><b>///</b> Inteligencia de Negocios · Modelo predictivo</p>
+        <h1>¿Terminará este piloto en el podio?</h1>
+        <p class="lede">El recorrido completo de los datos de Fórmula 1: de una base con 14 tablas a una sola pregunta de sí o no, y de ahí a la decisión de apostar.</p>
+        <div class="gantry" aria-live="polite">
+          <div class="lights" id="lights" role="img" aria-label="Etapa actual del recorrido">
+            <span class="light"></span><span class="light"></span><span class="light"></span><span class="light"></span><span class="light"></span>
+          </div>
+          <span class="gantry-text" id="gantry-text"></span>
+        </div>
+      </div>
+      <svg class="hero-car" viewBox="0 0 1260 400" role="img" aria-label="Ilustración de un monoplaza de Fórmula 1 visto de lado"><use href="#car"></use></svg>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Secciones">
+      <button class="tab" role="tab" id="tab-recorrido" data-view="recorrido" aria-controls="vista-recorrido" aria-selected="true">Recorrido</button>
+      <button class="tab" role="tab" id="tab-variables" data-view="variables" aria-controls="vista-variables" aria-selected="false">Variables</button>
+      <button class="tab" role="tab" id="tab-simulador" data-view="simulador" aria-controls="vista-simulador" aria-selected="false">Simulador</button>
+      <button class="tab" role="tab" id="tab-auto" data-view="auto" aria-controls="vista-auto" aria-selected="false">El auto</button>
+    </nav>
+  </div>
+</header>
+<div class="chequered" aria-hidden="true"></div>
+
+<main class="wrap">
+  <!-- ================= RECORRIDO ================= -->
+  <section class="view" id="vista-recorrido" role="tabpanel" aria-labelledby="tab-recorrido">
+    <p class="hint">Haz clic en cualquier bloque para ver qué significa y qué hicimos ahí. Para exponer, avanza con los botones o con las flechas ← → del teclado: el semáforo de arriba enciende una luz por cada etapa. Los ejemplos siguen un mismo dato, Lando Norris en el GP de Abu Dabi 2024.</p>
+    <div class="split">
+      <div class="flow" id="flow"></div>
+      <aside class="panel" id="panel" aria-live="polite">
+        <div class="panel-nav">
+          <button class="btn" id="btn-prev" type="button">← Anterior</button>
+          <span class="step" id="step"></span>
+          <button class="btn primary" id="btn-next" type="button">Siguiente →</button>
+        </div>
+        <div class="panel-body" id="panel-body"></div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= VARIABLES ================= -->
+  <section class="view" id="vista-variables" role="tabpanel" aria-labelledby="tab-variables" hidden>
+    <div class="stack">
+      <div class="sec">
+        <h2>Variable dependiente: lo que el modelo predice</h2>
+        <p>Es la respuesta que queremos adivinar antes de la carrera. Solo tiene dos valores posibles, por eso se puede usar regresión logística.</p>
+        <div class="target">
+          <div>
+            <span class="label">Dependiente (y)</span>
+            <div class="target-name">podio</div>
+            <p>1 si el piloto terminó entre los 3 primeros, 0 si no.</p>
+          </div>
+          <dl class="facts">
+            <div class="fact"><dt>Podio (1)</dt><dd>684 · 14,79 %</dd></div>
+            <div class="fact"><dt>No podio (0)</dt><dd>3.942 · 85,21 %</dd></div>
+          </dl>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h2>Variables independientes: lo que se sabe antes de largar</h2>
+        <p>Son los datos con los que el modelo calcula la probabilidad. Todas se conocen antes de que empiece la carrera. El ejemplo es Lando Norris en el GP de Abu Dabi 2024.</p>
+        <div class="card scroll">
+          <table>
+            <thead>
+              <tr><th>Variable</th><th>Qué significa</th><th>De dónde sale</th><th class="num">Ejemplo</th><th class="num">Nulos</th><th class="num">Correlación con podio</th><th class="num">Peso en el modelo</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="vname">posicion_salida</span></td><td>Puesto en la parrilla de salida. 1 es la pole position.</td><td><code>results.grid</code>. El valor 0 (pit lane o no largó) se vuelve nulo.</td><td class="num">1</td><td class="num">79</td><td class="num">−0,52</td><td class="num">−1,919</td></tr>
+              <tr><td><span class="vname">puntos_piloto_previos</span></td><td>Puntos que el piloto llevaba en el campeonato antes de la carrera.</td><td><code>driver_standings</code> de la carrera anterior.</td><td class="num">349</td><td class="num">0</td><td class="num">0,48</td><td class="num">0,114</td></tr>
+              <tr><td><span class="vname">puntos_escuderia_previos</span></td><td>Puntos que la escudería llevaba antes de la carrera.</td><td><code>constructor_standings</code> de la carrera anterior.</td><td class="num">640</td><td class="num">0</td><td class="num">0,46</td><td class="num">0,068</td></tr>
+              <tr><td><span class="vname">podios_ultimas_5</span></td><td>Podios del piloto en sus 5 carreras anteriores.</td><td>Calculada desde <code>results</code>.</td><td class="num">1</td><td class="num">0</td><td class="num">0,58</td><td class="num">0,374</td></tr>
+              <tr><td><span class="vname">pos_promedio_ultimas_5</span></td><td>Puesto final promedio en esas 5 carreras.</td><td>Calculada desde <code>results</code>. Nula si el piloto debuta.</td><td class="num">5,6</td><td class="num">38</td><td class="num">−0,51</td><td class="num">−0,479</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Un número negativo significa que entre más bajo el valor (mejor puesto), más probable es el podio. El peso en el modelo es el coeficiente de la regresión logística con las variables ya escaladas: la posición de salida pesa cuatro veces más que cualquier otra.</p>
+      </div>
+
+      <div class="sec">
+        <h2>Por qué manda la posición de salida</h2>
+        <p>Porcentaje de veces que un piloto hizo podio según el puesto de la parrilla desde el que salió, entre 2014 y 2024.</p>
+        <div class="grid-lane" role="list">
+          <div class="slot is-podium" role="listitem"><span class="slot-pos">P1</span><span class="slot-pct">80,7 %</span></div>
+          <div class="slot is-podium" role="listitem"><span class="slot-pos">P2</span><span class="slot-pct">71,2 %</span></div>
+          <div class="slot is-podium" role="listitem"><span class="slot-pos">P3</span><span class="slot-pct">54,8 %</span></div>
+          <div class="slot" role="listitem"><span class="slot-pos">P4</span><span class="slot-pct">34,2 %</span></div>
+          <div class="slot" role="listitem"><span class="slot-pos">P5</span><span class="slot-pct">16,7 %</span></div>
+          <div class="slot" role="listitem"><span class="slot-pos">P6</span><span class="slot-pct">14,5 %</span></div>
+          <div class="slot" role="listitem"><span class="slot-pos">P7</span><span class="slot-pct">6,6 %</span></div>
+          <div class="slot" role="listitem"><span class="slot-pos">P8</span><span class="slot-pct">3,1 %</span></div>
+        </div>
+        <p class="grid-foot">Los cajones en rojo son los que usa la regla simple de comparación (baseline): decir que hacen podio los 3 primeros de la parrilla. De los 79 pilotos que salieron desde el pit lane, ninguno hizo podio.</p>
+      </div>
+
+      <div class="sec">
+        <h2>Columnas que no entran al modelo</h2>
+        <p>Ocurren durante o después de la carrera. Si el modelo las viera estaría haciendo trampa, porque ya conocería el resultado. Eso se llama fuga de datos.</p>
+        <div class="card scroll">
+          <table>
+            <thead><tr><th>Columna</th><th>Qué es</th><th>Por qué se excluye</th></tr></thead>
+            <tbody>
+              <tr><td><span class="vname">posicion_final</span></td><td>Puesto en que terminó el piloto.</td><td>Es el resultado. Solo se usa para crear <code>podio</code>.</td></tr>
+              <tr><td><span class="vname">points</span></td><td>Puntos ganados en esa carrera.</td><td>Se asignan según el puesto final.</td></tr>
+              <tr><td><span class="vname">laps, time</span></td><td>Vueltas completadas y tiempo total.</td><td>Solo se conocen al terminar.</td></tr>
+              <tr><td><span class="vname">fastestLap, statusId</span></td><td>Vuelta rápida y estado final (terminó, abandonó).</td><td>Solo se conocen al terminar.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h2>Equivalencia con el ejemplo de clase</h2>
+        <div class="card scroll">
+          <table>
+            <thead><tr><th>Elemento</th><th>Ejemplo de clase (Premier League)</th><th>Nuestro proyecto (Fórmula 1)</th></tr></thead>
+            <tbody>
+              <tr><td>Variables independientes</td><td class="mono">B365H, B365D, B365A, prob_mercado_local</td><td>Las 5 de arriba</td></tr>
+              <tr><td>Variable dependiente</td><td class="mono">gana_local</td><td class="mono">podio</td></tr>
+              <tr><td>Nulos</td><td>47 inyectados a mano (1,55 %)</td><td>117 reales: 79 + 38</td></tr>
+              <tr><td>Matriz plana</td><td>3.040 filas × 14 columnas</td><td>4.626 filas × 14 columnas</td></tr>
+              <tr><td>Split cronológico</td><td>Train 08/09 a 14/15, test 15/16</td><td>Train 2014 a 2023, test 2024</td></tr>
+              <tr><td>Baseline</td><td>Siempre gana el local</td><td>Hacen podio los 3 primeros de la parrilla</td></tr>
+              <tr><td>Decisión</td><td>p ≥ 0,60: apostar al local</td><td>p ≥ 0,60: apostar al podio</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SIMULADOR ================= -->
+  <section class="view" id="vista-simulador" role="tabpanel" aria-labelledby="tab-simulador" hidden>
+    <p class="hint">Esta es la función de inferencia funcionando en vivo con el modelo entrenado. Mueve los datos de un piloto antes de la carrera y mira cómo cambian la probabilidad y la decisión.</p>
+    <div class="presets" id="presets" role="group" aria-label="Casos de ejemplo"></div>
+    <div class="sim">
+      <div class="controls">
+        <div class="control">
+          <div class="control-head"><label for="in-salida">Posición de salida</label><span class="control-val" id="out-salida"></span></div>
+          <input type="range" id="in-salida" min="1" max="20" step="1" value="1">
+          <label class="check"><input type="checkbox" id="chk-pit"> Sale desde el pit lane (dato nulo, se imputa con la mediana)</label>
+        </div>
+        <div class="control">
+          <div class="control-head"><label for="in-pp">Puntos del piloto antes de la carrera</label><span class="control-val" id="out-pp"></span></div>
+          <input type="range" id="in-pp" min="0" max="550" step="1" value="349">
+        </div>
+        <div class="control">
+          <div class="control-head"><label for="in-pe">Puntos de la escudería antes de la carrera</label><span class="control-val" id="out-pe"></span></div>
+          <input type="range" id="in-pe" min="0" max="850" step="1" value="640">
+        </div>
+        <div class="control">
+          <div class="control-head"><label for="in-pod">Podios en sus últimas 5 carreras</label><span class="control-val" id="out-pod"></span></div>
+          <input type="range" id="in-pod" min="0" max="5" step="1" value="1">
+        </div>
+        <div class="control">
+          <div class="control-head"><label for="in-prom">Puesto promedio en sus últimas 5 carreras</label><span class="control-val" id="out-prom"></span></div>
+          <input type="range" id="in-prom" min="1" max="20" step="0.1" value="5.6">
+          <label class="check"><input type="checkbox" id="chk-debut"> Piloto debutante (dato nulo, se imputa con la mediana)</label>
+        </div>
+      </div>
+      <div class="result" aria-live="polite">
+        <div>
+          <span class="label">Probabilidad de podio</span>
+          <div class="prob" id="prob"></div>
+          <div class="meter" aria-hidden="true"><div class="meter-fill" id="meter-fill"></div><div class="meter-tick"></div></div>
+          <div class="meter-scale" aria-hidden="true"><span style="left:0">0 %</span><span class="t60">umbral 60 %</span><span style="right:0">100 %</span></div>
+        </div>
+        <div class="decision" id="decision"><span class="decision-icon" id="decision-icon"></span><span id="decision-text"></span></div>
+        <p class="real" id="real" hidden></p>
+        <div class="block">
+          <h3>Cómo llegó a ese número</h3>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Variable</th><th class="num">Valor</th><th class="num">Escalado</th><th class="num">Aporte</th></tr></thead>
+              <tbody id="breakdown"></tbody>
+            </table>
+          </div>
+          <p class="formula" id="formula"></p>
+          <p class="real">Escalado = (valor − media) ÷ desviación. Aporte = escalado × coeficiente. Un aporte positivo sube la probabilidad y uno negativo la baja.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= EL AUTO ================= -->
+  <section class="view" id="vista-auto" role="tabpanel" aria-labelledby="tab-auto" hidden>
+    <div class="stack">
+      <div class="sec">
+        <h2>Un Fórmula 1 por partes</h2>
+        <p>Toca un número para ver qué es cada parte. Con el control de zoom puedes acercarte y moverte por el dibujo. Es una ilustración propia, no el auto de un equipo real.</p>
+        <div class="garage">
+          <div class="garage-bar">
+            <label for="zoom">Zoom</label>
+            <input type="range" id="zoom" min="100" max="300" step="10" value="100">
+            <output id="zoom-out" for="zoom">100 %</output>
+          </div>
+          <div class="car-stage" id="car-stage">
+            <svg class="car-big" id="car-big" viewBox="0 0 1260 400" role="group" aria-label="Monoplaza de Fórmula 1 con 8 partes señaladas">
+              <use href="#car"></use>
+              <g id="hotspots"></g>
+            </svg>
+          </div>
+        </div>
+        <div class="parts">
+          <div class="part-list" id="part-list"></div>
+          <div class="part-card" id="part-card" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h2>Glosario de carrera</h2>
+        <p>Los términos de F1 que aparecen en las variables del proyecto.</p>
+        <dl class="glossary">
+          <div class="term"><dt>Parrilla de salida</dt><dd>El orden en que los autos se ubican para largar. Se define en la clasificación, el día anterior a la carrera.</dd><dd><span class="vname">posicion_salida</span></dd></div>
+          <div class="term"><dt>Pole position</dt><dd>El primer puesto de la parrilla. Quien sale desde ahí hizo podio el 80,7 % de las veces.</dd><dd><span class="vname">posicion_salida = 1</span></dd></div>
+          <div class="term"><dt>Pit lane</dt><dd>La calle de boxes. Un auto larga desde ahí cuando tuvo problemas o cambió piezas antes de la carrera, y arranca detrás de todos.</dd><dd><span class="vname">posicion_salida nula</span></dd></div>
+          <div class="term"><dt>Podio</dt><dd>Los tres primeros en terminar la carrera. Es lo que el modelo predice.</dd><dd><span class="vname">podio</span></dd></div>
+          <div class="term"><dt>Escudería</dt><dd>El equipo. Cada una corre con dos autos y suma los puntos de sus dos pilotos.</dd><dd><span class="vname">puntos_escuderia_previos</span></dd></div>
+          <div class="term"><dt>Puntos</dt><dd>Los 10 primeros de cada carrera suman puntos para el campeonato: 25 el ganador, 18 el segundo, 15 el tercero.</dd><dd><span class="vname">puntos_piloto_previos</span></dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ============ Datos del recorrido ============ */
+  var EJEMPLO = "Sigue un dato: Lando Norris, GP de Abu Dabi 2024";
+
+  var STAGES = [
+    { n: 1, title: "Almacén transaccional", script: "01_cargar_sqlite.py", rows: [["db"], ["results", "catalogos", "campeonato"]] },
+    { n: 2, title: "Fase ETL y auditoría", script: "02_auditoria.py · 03_etl.py", rows: [["auditoria"], ["filtro"], ["join"], ["calculo"], ["nulos"]] },
+    { n: 3, title: "Matriz analítica plana", script: "salida de 03_etl.py", rows: [["csv"]] },
+    { n: 4, title: "Pipeline de machine learning", script: "04_modelado_podio.py", rows: [["imputacion"], ["split"], ["scaler"], ["modelo"]] },
+    { n: 5, title: "Explotación", script: "04_modelado_podio.py", rows: [["metricas", "inferencia"]] }
+  ];
+
+  var NODES = {
+    db: {
+      title: "f1.sqlite", sub: "20,9 MB · 14 tablas", data: true,
+      simple: "Un almacén transaccional es la base de datos tal como la guarda el sistema original: muchas tablas pequeñas conectadas entre sí por números de identificación (IDs). Está hecha para registrar datos, no para analizarlos.",
+      did: ["Descargamos de Kaggle el dataset Formula 1 World Championship (1950 a 2024), que viene en 14 archivos CSV.", "Los cargamos en un solo archivo SQLite con el script 01_cargar_sqlite.py.", "El dataset marca los datos faltantes con \\N. Al cargar, esa marca se convierte en nulos reales."],
+      facts: [["Tablas", "14"], ["Filas en total", "701.433"], ["Peso", "20,9 MB"], ["Carreras", "1.125"]],
+      code: "python src/01_cargar_sqlite.py"
+    },
+    results: {
+      title: "Tabla results", sub: "26.759 filas · 18 columnas",
+      simple: "Es la tabla central. Cada fila es un piloto en una carrera: desde qué puesto salió y en qué puesto terminó.",
+      did: ["De aquí salen la posición de salida y el resultado final, con el que sabemos si hubo podio.", "El problema es que no se puede leer: el piloto, la escudería y la carrera aparecen como números."],
+      tables: [{ tag: EJEMPLO, caption: "Así se ve la fila en el almacén. ¿Quién es el piloto 846?", head: ["resultId", "raceId", "driverId", "constructorId", "grid", "positionOrder"], rows: [["26745", "1144", "846", "1", "1", "1"]] }]
+    },
+    catalogos: {
+      title: "Catálogos", sub: "races, drivers, constructors",
+      simple: "Son las tablas que traducen cada ID a un nombre que una persona puede leer.",
+      facts: [["races", "1.125 carreras"], ["drivers", "861 pilotos"], ["constructors", "212 escuderías"]],
+      tables: [{ tag: EJEMPLO, caption: "Los catálogos responden la pregunta anterior.", head: ["ID", "Tabla", "Significa"], rows: [["driverId 846", "drivers", "Lando Norris"], ["constructorId 1", "constructors", "McLaren"], ["raceId 1144", "races", "Abu Dhabi Grand Prix, 8 dic 2024"]] }]
+    },
+    campeonato: {
+      title: "Tablas de campeonato", sub: "driver_standings, constructor_standings",
+      simple: "Guardan cuántos puntos llevaba cada piloto y cada escudería después de cada carrera.",
+      did: ["Las usamos para saber con cuántos puntos llegaba cada uno a una carrera. Para eso tomamos la tabla tal como quedó al terminar la carrera anterior."],
+      facts: [["driver_standings", "34.863 filas"], ["constructor_standings", "13.391 filas"]],
+      tables: [{ tag: EJEMPLO, caption: "Cómo estaba el campeonato tras el GP de Qatar, la carrera anterior.", head: ["Quién", "Puntos tras Qatar"], rows: [["Lando Norris", "349"], ["McLaren", "640"]] }]
+    },
+    auditoria: {
+      title: "Auditoría", sub: "02_auditoria.py",
+      simple: "Antes de usar los datos hay que revisarlos: ¿faltan valores?, ¿hay cosas imposibles?, ¿las tablas se conectan bien? Un modelo entrenado con datos malos da recomendaciones malas.",
+      did: ["Llaves entre tablas: 0 huérfanos. Todo piloto, escudería y carrera de results existe en su catálogo.", "10.953 filas sin posición final (40,9 %): pilotos que no terminaron la carrera.", "1.638 filas con posición de salida 0, que no es un puesto real: el piloto salió desde el pit lane o no largó.", "85 casos de un piloto repetido en la misma carrera (1950 a 1978) y 18 carreras con más de 3 pilotos en el podio (1950 a 1960)."],
+      note: "Conclusión: los problemas graves están en las temporadas antiguas. Eso guía el filtro del siguiente paso.",
+      code: "python src/02_auditoria.py\n# El reporte queda en docs/auditoria.txt"
+    },
+    filtro: {
+      title: "Filtro: 2014 a 2024", sub: "4.626 filas · 228 carreras · 11 temporadas",
+      simple: "No usamos toda la historia. Elegimos un periodo donde los datos están limpios y las reglas del deporte son comparables, igual que en clase se usó solo la Premier League.",
+      did: ["Nos quedamos con la era híbrida de la F1, de 2014 a 2024.", "En ese rango no hay pilotos repetidos ni podios raros, y todas las filas tienen datos de campeonato."],
+      facts: [["Filas", "4.626"], ["Carreras", "228"], ["Pilotos", "59"], ["Escuderías", "20"]],
+      code: "WHERE ra.year BETWEEN 2014 AND 2024"
+    },
+    join: {
+      title: "JOIN", sub: "results + races + drivers + constructors",
+      simple: "Un JOIN une dos tablas usando el ID que comparten. Así cada fila deja de ser una lista de números y pasa a tener nombres.",
+      did: ["Entraron 4.626 filas y salieron 4.626: el cruce no perdió ni duplicó nada."],
+      code: "FROM results r\nJOIN races ra       ON ra.raceId = r.raceId\nJOIN drivers d      ON d.driverId = r.driverId\nJOIN constructors c ON c.constructorId = r.constructorId",
+      tables: [{ tag: EJEMPLO, caption: "La misma fila, antes y después del JOIN.", head: ["", "Carrera", "Piloto", "Escudería"], rows: [["Antes", "1144", "846", "1"], ["Después", "Abu Dhabi Grand Prix", "Lando Norris", "McLaren"]] }]
+    },
+    calculo: {
+      title: "Cálculo de variables", sub: "solo datos previos a la carrera",
+      simple: "El modelo solo puede usar información que se conoce antes de que empiece la carrera. Si le damos algo que ocurre después, como los puntos que ganó ese día, haría trampa. Eso se llama fuga de datos.",
+      did: ["puntos_piloto_previos y puntos_escuderia_previos: puntos del campeonato al terminar la carrera anterior.", "podios_ultimas_5: podios del piloto en sus 5 carreras anteriores.", "pos_promedio_ultimas_5: puesto final promedio en esas 5 carreras.", "podio: 1 si terminó entre los 3 primeros. Es la variable que se va a predecir."],
+      tables: [{ tag: EJEMPLO, caption: "Norris venía de terminar 4.º, 2.º, 6.º, 6.º y 10.º: un podio y un promedio de 5,6.", head: ["puntos_piloto_previos", "puntos_escuderia_previos", "podios_ultimas_5", "pos_promedio_ultimas_5"], rows: [["349", "640", "1", "5,6"]] }]
+    },
+    nulos: {
+      title: "Nulos reales", sub: "79 salidas en 0 · 38 debutantes",
+      simple: "Un nulo es un dato que falta. El modelo no puede trabajar con huecos, así que hay que detectarlos y decidir qué hacer con ellos.",
+      did: ["En el ejemplo de clase se inyectaron 47 nulos a mano para practicar (1,55 %). Nuestro dataset ya los trae.", "79 filas (1,71 %) tienen posición de salida 0. Las marcamos como nulo.", "38 filas (0,82 %) son de pilotos debutantes: no tienen carreras anteriores, así que su promedio no existe."],
+      facts: [["posicion_salida", "79 nulos"], ["pos_promedio_ultimas_5", "38 nulos"]],
+      note: "En el ETL los nulos solo se marcan. Se rellenan más adelante, en el pipeline."
+    },
+    csv: {
+      title: "pilotos_analitica.csv", sub: "436 KB · 4.626 filas × 14 columnas", data: true,
+      simple: "Los modelos predictivos no leen bases con muchas tablas. Necesitan una sola tabla plana, donde cada fila es un caso y cada columna es una variable.",
+      did: ["El script 03_etl.py termina guardando esta tabla. Cada fila es un piloto en una carrera.", "Tiene 7 columnas de identificación, 5 variables independientes, 1 de referencia y 1 objetivo."],
+      facts: [["Filas", "4.626"], ["Columnas", "14"], ["Podio", "684 · 14,79 %"], ["No podio", "3.942 · 85,21 %"]],
+      code: "python src/03_etl.py",
+      tables: [{ tag: EJEMPLO, caption: "La fila completa, lista para el modelo.", head: ["piloto", "escuderia", "posicion_salida", "puntos_piloto_previos", "puntos_escuderia_previos", "podios_ultimas_5", "pos_promedio_ultimas_5", "podio"], rows: [["Lando Norris", "McLaren", "1", "349", "640", "1", "5,6", "1"]] }]
+    },
+    imputacion: {
+      title: "Imputación de nulos", sub: "mediana = 11",
+      simple: "Imputar es rellenar un dato que falta con un valor razonable. La mediana es el valor que queda en el centro al ordenar todos los datos, y no se deja arrastrar por valores extremos.",
+      did: ["Los 79 nulos de posicion_salida se rellenaron con 11, la mediana de esa columna.", "Los 38 nulos de pos_promedio_ultimas_5 se rellenaron con 11,0.", "Las medianas se calcularon solo con los datos de entrenamiento, para no usar información del futuro."],
+      facts: [["Mediana de posicion_salida", "11"], ["Mediana de pos_promedio_ultimas_5", "11,0"]],
+      code: "SimpleImputer(strategy=\"median\")",
+      note: "Limitación: quien sale del pit lane en realidad arranca último, y la mediana lo ubica a mitad de parrilla. Seguimos el método visto en clase y lo dejamos anotado."
+    },
+    split: {
+      title: "Split cronológico", sub: "Train 2014 a 2023 · Test 2024",
+      simple: "Para saber si el modelo sirve, se entrena con una parte de los datos y se pone a prueba con otra que nunca vio. Como las carreras ocurren en el tiempo, se entrena con el pasado y se prueba con el futuro.",
+      did: ["Entrenamos con las temporadas 2014 a 2023 y probamos con la temporada 2024 completa.", "Si se mezclara al azar, el modelo vería carreras de 2024 para predecir carreras de 2023. Eso es una fuga temporal."],
+      facts: [["Train 2014 a 2023", "4.147 filas"], ["Podios en train", "14,76 %"], ["Test 2024", "479 filas"], ["Podios en test", "15,03 %"]]
+    },
+    scaler: {
+      title: "StandardScaler", sub: "se ajusta en train, se aplica en test",
+      simple: "Las variables tienen escalas muy distintas: la posición va de 1 a 22 y los puntos de escudería llegan a 822. El escalado las pone todas en la misma escala para que ninguna pese más solo por tener números grandes.",
+      did: ["El escalador se ajustó solo con los datos de entrenamiento y luego se aplicó al conjunto de prueba.", "Cada valor pasa a decir cuántas desviaciones está por encima o por debajo de la media."],
+      tables: [
+        { caption: "Media y desviación de cada variable en train.", head: ["Variable", "Media", "Desviación"], rows: [["posicion_salida", "10,57", "5,79"], ["puntos_piloto_previos", "49,18", "72,35"], ["puntos_escuderia_previos", "98,37", "140,22"], ["podios_ultimas_5", "0,73", "1,33"], ["pos_promedio_ultimas_5", "10,63", "4,29"]] },
+        { tag: EJEMPLO, caption: "Norris salía 1.º: (1 − 10,57) ÷ 5,79 = −1,65. Está 1,65 desviaciones por delante del promedio.", head: ["posicion_salida", "Escalado"], rows: [["1", "−1,65"]] }
+      ],
+      code: "StandardScaler()"
+    },
+    modelo: {
+      title: "Regresión logística", sub: "solver = lbfgs",
+      simple: "Es un modelo de clasificación. Recibe las variables y devuelve una probabilidad entre 0 y 1, con una curva en forma de S llamada función sigmoide. Aquí es la probabilidad de que el piloto termine en el podio.",
+      did: ["Se entrenó con las 4.147 filas de 2014 a 2023.", "El modelo aprendió un peso (coeficiente) para cada variable. Positivo sube la probabilidad de podio; negativo la baja."],
+      tables: [{ caption: "Lo que aprendió el modelo.", head: ["Variable", "Coeficiente"], rows: [["posicion_salida", "−1,919"], ["puntos_piloto_previos", "0,114"], ["puntos_escuderia_previos", "0,068"], ["podios_ultimas_5", "0,374"], ["pos_promedio_ultimas_5", "−0,479"], ["Intercepto", "−3,561"]] }],
+      note: "La posición de salida pesa cuatro veces más que cualquier otra variable: salir adelante es lo que más acerca al podio.",
+      code: "LogisticRegression(solver=\"lbfgs\")"
+    },
+    metricas: {
+      title: "Métricas", sub: "ROC-AUC 0,925 · baseline 0,921",
+      simple: "La matriz de confusión cuenta los aciertos y los errores de cada tipo. El ROC-AUC mide qué tan bien separa el modelo a los que hacen podio de los que no: 0,5 es adivinar y 1 es perfecto.",
+      did: ["Se evaluó con la temporada 2024: 479 filas y 72 podios reales.", "Se comparó contra una regla simple (baseline): decir que hacen podio los 3 primeros de la parrilla."],
+      facts: [["ROC-AUC del modelo", "0,925"], ["ROC-AUC del baseline", "0,921"]],
+      tables: [
+        { caption: "Matriz de confusión con umbral 0,50.", head: ["", "Predijo no podio", "Predijo podio"], rows: [["Real: no podio", "383", "24"], ["Real: podio", "28", "44"]] },
+        { caption: "Comparación de estrategias en 2024.", head: ["Estrategia", "Exactitud", "Precisión", "Recall", "F1"], rows: [["Nadie hace podio", "0,850", "0", "0", "0"], ["Los 3 primeros de la parrilla", "0,900", "0,667", "0,667", "0,667"], ["Modelo, umbral 0,50", "0,891", "0,647", "0,611", "0,629"], ["Modelo, umbral 0,60", "0,889", "0,667", "0,528", "0,589"]] }
+      ],
+      note: "Resultado: el modelo queda prácticamente empatado con la regla de los 3 primeros de la parrilla. Lo que aporta es una probabilidad para cualquier piloto, que es lo que necesita la función de inferencia."
+    },
+    inferencia: {
+      title: "Función de inferencia", sub: "p ≥ 0,60 → apostar al podio",
+      simple: "Es el paso prescriptivo: convertir la probabilidad en una decisión. Si el modelo da 60 % o más de probabilidad de podio, se apuesta. Si da menos, no.",
+      did: ["La función predecir_podio recibe los 5 datos de un piloto antes de la carrera y devuelve la probabilidad y la decisión.", "En 2024 el modelo habría apostado 57 veces con este umbral y acertado 38 (66,7 %)."],
+      tables: [
+        { caption: "Tres casos de prueba.", head: ["Caso", "Probabilidad", "Decisión"], rows: [["Sale 1.º, líder del campeonato, 4 podios seguidos", "88,9 %", "Apostar"], ["Sale 4.º, buen equipo, 2 podios recientes", "48,2 %", "No apostar"], ["Sale 15.º, equipo de media tabla, sin podios", "0,4 %", "No apostar"]] },
+        { tag: EJEMPLO, caption: "El modelo habría apostado por Norris. Resultado real: ganó la carrera.", head: ["Probabilidad", "Decisión", "Resultado real"], rows: [["72,7 %", "Apostar", "1.º"]] }
+      ],
+      note: "Puedes probarla con tus propios datos en la pestaña Simulador.",
+      code: "predecir_podio(modelo, posicion_salida=1, puntos_piloto_previos=349,\n               puntos_escuderia_previos=640, podios_ultimas_5=1,\n               pos_promedio_ultimas_5=5.6)"
+    }
+  };
+
+  /* ============ Utilidades ============ */
+  function $(id) { return document.getElementById(id); }
+  function esc(text) { return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function fmt(value, decimals) {
+    var text = Math.abs(value).toFixed(decimals).replace(".", ",");
+    return (value < 0 && Number(Math.abs(value).toFixed(decimals)) !== 0 ? "−" : "") + text;
+  }
+  function list(items) { return "<ul>" + items.map(function (item) { return "<li>" + esc(item) + "</li>"; }).join("") + "</ul>"; }
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function isNarrow() { return window.matchMedia && window.matchMedia("(max-width: 860px)").matches; }
+
+  /* ============ Recorrido ============ */
+  var ORDER = [];
+  var STAGE_OF = {};
+  STAGES.forEach(function (stage) {
+    stage.rows.forEach(function (row) { row.forEach(function (id) { ORDER.push(id); STAGE_OF[id] = stage; }); });
+  });
+  var flow = $("flow"), panel = $("panel"), panelBody = $("panel-body");
+  var current = ORDER[0];
+
+  function renderFlow() {
+    var html = "";
+    STAGES.forEach(function (stage, stageIndex) {
+      if (stageIndex > 0) { html += '<div class="arrow" aria-hidden="true"></div>'; }
+      html += '<div class="stage" id="stage-' + stage.n + '"><div class="stage-head"><span class="stage-title"><span>' + stage.n + "</span>" + esc(stage.title) + '</span><span class="stage-script">' + esc(stage.script) + "</span></div>";
+      stage.rows.forEach(function (row, rowIndex) {
+        if (rowIndex > 0) { html += '<div class="arrow" aria-hidden="true"></div>'; }
+        html += '<div class="row">';
+        row.forEach(function (id) {
+          var node = NODES[id];
+          html += '<button type="button" class="node' + (node.data ? " is-data" : "") + '" data-node="' + id + '" id="node-' + id + '">' +
+            '<span class="node-title">' + esc(node.title) + '</span><span class="node-sub">' + esc(node.sub) + "</span></button>";
+        });
+        html += "</div>";
+      });
+      html += "</div>";
+    });
+    flow.innerHTML = html;
+  }
+
+  function renderTable(table) {
+    var html = '<div class="example">';
+    if (table.tag) { html += '<span class="example-tag">' + esc(table.tag) + "</span>"; }
+    html += "<p>" + esc(table.caption) + '</p><div class="scroll"><table><thead><tr>' +
+      table.head.map(function (cell) { return "<th>" + esc(cell) + "</th>"; }).join("") + "</tr></thead><tbody>" +
+      table.rows.map(function (row) { return "<tr>" + row.map(function (cell) { return '<td class="mono">' + esc(cell) + "</td>"; }).join("") + "</tr>"; }).join("") +
+      "</tbody></table></div></div>";
+    return html;
+  }
+
+  function renderPanel(id) {
+    var node = NODES[id], stage = STAGE_OF[id];
+    var html = '<p class="panel-stage">Etapa ' + stage.n + " · " + esc(stage.title) + "</p>";
+    html += "<h2>" + esc(node.title) + "</h2>";
+    html += '<div class="block"><h3>En palabras simples</h3><p class="simple">' + esc(node.simple) + "</p></div>";
+    if (node.did) { html += '<div class="block"><h3>Qué hicimos</h3>' + list(node.did) + "</div>"; }
+    if (node.facts) {
+      html += '<dl class="facts">' + node.facts.map(function (fact) { return '<div class="fact"><dt>' + esc(fact[0]) + "</dt><dd>" + esc(fact[1]) + "</dd></div>"; }).join("") + "</dl>";
+    }
+    if (node.tables) { html += node.tables.map(renderTable).join(""); }
+    if (node.code) { html += '<div class="block"><h3>Código</h3><pre><code>' + esc(node.code) + "</code></pre></div>"; }
+    if (node.note) { html += '<p class="note">' + esc(node.note) + "</p>"; }
+    panelBody.innerHTML = html;
+  }
+
+  function select(id, source) {
+    current = id;
+    var index = ORDER.indexOf(id), stage = STAGE_OF[id];
+    Array.prototype.forEach.call(flow.querySelectorAll(".node"), function (button) {
+      var active = button.getAttribute("data-node") === id;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+    STAGES.forEach(function (item) { $("stage-" + item.n).classList.toggle("is-current", item.n === stage.n); });
+    Array.prototype.forEach.call($("lights").children, function (light, i) { light.classList.toggle("on", i < stage.n); });
+    $("gantry-text").innerHTML = "Etapa <b>" + stage.n + " de 5</b> · " + esc(stage.title);
+    renderPanel(id);
+    $("step").innerHTML = "Paso <b>" + (index + 1) + "</b> / " + ORDER.length;
+    $("btn-prev").disabled = index === 0;
+    $("btn-next").disabled = index === ORDER.length - 1;
+    panel.scrollTop = 0;
+    var behavior = reduceMotion ? "auto" : "smooth";
+    if (source === "click" && isNarrow()) {
+      panel.scrollIntoView({ behavior: behavior, block: "start" });
+    } else if (source === "nav" && !isNarrow()) {
+      var button = $("node-" + id);
+      if (button) { button.scrollIntoView({ behavior: behavior, block: "nearest" }); }
+    }
+  }
+  function move(delta) {
+    var index = ORDER.indexOf(current) + delta;
+    if (index >= 0 && index < ORDER.length) { select(ORDER[index], "nav"); }
+  }
+
+  /* ============ Simulador: el mismo modelo que entrenó 04_modelado_podio.py ============ */
+  var MODEL = {
+    names: ["posicion_salida", "puntos_piloto_previos", "puntos_escuderia_previos", "podios_ultimas_5", "pos_promedio_ultimas_5"],
+    medians: [11.0, 18.0, 37.0, 0.0, 11.0],
+    means: [10.568121533638775, 49.18398842536774, 98.3694236797685, 0.7318543525440078, 10.633346997829756],
+    scales: [5.791188138845096, 72.34790406619273, 140.21970001990863, 1.3303801226736458, 4.289118435401209],
+    coefs: [-1.9185144280477329, 0.11404051551712702, 0.06805269261291463, 0.37356851369705874, -0.4786667568778044],
+    intercept: -3.5612269433048307,
+    threshold: 0.60
+  };
+  var PRESETS = [
+    { label: "Norris, Abu Dabi 2024", values: [1, 349, 640, 1, 5.6], real: "Caso real del conjunto de prueba. Resultado: ganó la carrera." },
+    { label: "Favorito claro", values: [1, 300, 500, 4, 2.0] },
+    { label: "Caso parejo", values: [4, 180, 350, 2, 5.0] },
+    { label: "Sin opciones", values: [15, 12, 30, 0, 13.0] }
+  ];
+  var INPUTS = ["in-salida", "in-pp", "in-pe", "in-pod", "in-prom"];
+  var activePreset = 0;
+
+  function predict(values) {
+    var z = MODEL.intercept, parts = [];
+    for (var i = 0; i < 5; i++) {
+      var imputed = values[i] === null;
+      var used = imputed ? MODEL.medians[i] : values[i];
+      var scaled = (used - MODEL.means[i]) / MODEL.scales[i];
+      var contribution = scaled * MODEL.coefs[i];
+      z += contribution;
+      parts.push({ name: MODEL.names[i], used: used, imputed: imputed, scaled: scaled, contribution: contribution });
+    }
+    return { z: z, p: 1 / (1 + Math.exp(-z)), parts: parts };
+  }
+
+  function readInputs() {
+    var values = INPUTS.map(function (id) { return parseFloat($(id).value); });
+    if ($("chk-pit").checked) { values[0] = null; }
+    if ($("chk-debut").checked) { values[4] = null; }
+    return values;
+  }
+
+  function renderSim() {
+    var values = readInputs();
+    var result = predict(values);
+    $("out-salida").textContent = values[0] === null ? "pit lane" : values[0] + ".º";
+    $("out-pp").textContent = fmt(values[1], 0);
+    $("out-pe").textContent = fmt(values[2], 0);
+    $("out-pod").textContent = fmt(values[3], 0);
+    $("out-prom").textContent = values[4] === null ? "sin dato" : fmt(values[4], 1);
+    $("in-salida").disabled = values[0] === null;
+    $("in-prom").disabled = values[4] === null;
+
+    var go = result.p >= MODEL.threshold;
+    $("prob").textContent = fmt(result.p * 100, 1) + " %";
+    $("meter-fill").style.width = (result.p * 100).toFixed(2) + "%";
+    $("meter-fill").classList.toggle("go", go);
+    $("decision").classList.toggle("go", go);
+    $("decision-icon").textContent = go ? "✓" : "✕";
+    $("decision-text").textContent = go ? "Apostar al podio" : "No apostar";
+
+    var rows = result.parts.map(function (part) {
+      var decimals = part.name === "pos_promedio_ultimas_5" ? 1 : 0;
+      return '<tr><td><span class="vname">' + part.name + '</span></td><td class="num">' + fmt(part.used, decimals) + (part.imputed ? " (mediana)" : "") +
+        '</td><td class="num">' + fmt(part.scaled, 2) + '</td><td class="num">' + (part.contribution > 0 ? "+" : "") + fmt(part.contribution, 2) + "</td></tr>";
+    }).join("");
+    rows += '<tr><td>Intercepto</td><td class="num"></td><td class="num"></td><td class="num">' + fmt(MODEL.intercept, 2) + "</td></tr>";
+    rows += '<tr><td><b>Suma (z)</b></td><td class="num"></td><td class="num"></td><td class="num"><b>' + fmt(result.z, 2) + "</b></td></tr>";
+    $("breakdown").innerHTML = rows;
+    $("formula").textContent = "p = 1 ÷ (1 + e^(−z)) = 1 ÷ (1 + e^(" + fmt(-result.z, 2) + ")) = " + fmt(result.p, 3);
+
+    var preset = activePreset === null ? null : PRESETS[activePreset];
+    $("real").hidden = !(preset && preset.real);
+    $("real").textContent = preset && preset.real ? preset.real : "";
+    Array.prototype.forEach.call($("presets").children, function (button, i) { button.classList.toggle("is-on", i === activePreset); });
+  }
+
+  function applyPreset(index) {
+    activePreset = index;
+    PRESETS[index].values.forEach(function (value, i) { $(INPUTS[i]).value = value; });
+    $("chk-pit").checked = false;
+    $("chk-debut").checked = false;
+    renderSim();
+  }
+
+  function setupSim() {
+    $("presets").innerHTML = PRESETS.map(function (preset, i) { return '<button type="button" class="btn" data-preset="' + i + '">' + esc(preset.label) + "</button>"; }).join("");
+    $("presets").addEventListener("click", function (event) {
+      var button = event.target.closest ? event.target.closest("[data-preset]") : null;
+      if (button) { applyPreset(parseInt(button.getAttribute("data-preset"), 10)); }
+    });
+    INPUTS.concat(["chk-pit", "chk-debut"]).forEach(function (id) {
+      $(id).addEventListener("input", function () { activePreset = null; renderSim(); });
+    });
+    applyPreset(0);
+  }
+
+  /* ============ El auto ============ */
+  var PARTS = [
+    { n: 1, x: 1186, y: 272, name: "Alerón delantero", text: "Es lo primero que toca el aire. Genera agarre en las ruedas delanteras y ordena el flujo de aire hacia el resto del auto." },
+    { n: 2, x: 966, y: 178, name: "Neumáticos", text: "El único contacto del auto con la pista. En seco hay tres compuestos que se distinguen por el color de la banda: blando (rojo), medio (amarillo) y duro (blanco). El del dibujo lleva el medio." },
+    { n: 3, x: 692, y: 164, name: "Halo", text: "Arco de titanio que protege la cabeza del piloto. Es obligatorio desde 2018." },
+    { n: 4, x: 640, y: 282, name: "Pontones", text: "Los costados del auto. Adentro van los radiadores que enfrían el motor." },
+    { n: 5, x: 568, y: 118, name: "Toma de aire", text: "La entrada de aire sobre la cabeza del piloto. Alimenta al motor y hace parte de la estructura que lo protege si el auto se vuelca." },
+    { n: 6, x: 392, y: 226, name: "Unidad de potencia", text: "El motor: un V6 turbo de 1,6 litros con sistema híbrido, que se usa desde 2014.", project: "Por eso el filtro del proyecto va de 2014 a 2024. Es la era híbrida, con autos comparables entre sí." },
+    { n: 7, x: 124, y: 122, name: "Alerón trasero y DRS", text: "Genera agarre en las ruedas traseras. El DRS abre la aleta superior en las rectas para ganar velocidad y facilitar los adelantamientos.", project: "Aun con DRS, adelantar es difícil. Eso ayuda a entender por qué la posición de salida es la variable que más pesa en el modelo." },
+    { n: 8, x: 520, y: 338, name: "Suelo", text: "La parte de abajo del auto. Desde 2022 genera buena parte del agarre por efecto suelo, que pega el auto al asfalto." }
+  ];
+  var activePart = 6;
+
+  function renderPart() {
+    var part = PARTS.filter(function (item) { return item.n === activePart; })[0];
+    var html = '<span class="label">Parte ' + part.n + " de " + PARTS.length + "</span><h3>" + esc(part.name) + "</h3><p>" + esc(part.text) + "</p>";
+    if (part.project) { html += '<div class="link-proj"><span class="label">En el proyecto</span><p>' + esc(part.project) + "</p></div>"; }
+    $("part-card").innerHTML = html;
+    Array.prototype.forEach.call(document.querySelectorAll("[data-part]"), function (element) {
+      var active = parseInt(element.getAttribute("data-part"), 10) === activePart;
+      element.classList.toggle("is-active", active);
+      element.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+  }
+
+  function setupCar() {
+    $("hotspots").innerHTML = PARTS.map(function (part) {
+      return '<g class="hot" data-part="' + part.n + '" tabindex="0" role="button" aria-label="' + esc(part.name) + '">' +
+        '<circle class="ring" cx="' + part.x + '" cy="' + part.y + '" r="24"></circle>' +
+        '<circle class="dot" cx="' + part.x + '" cy="' + part.y + '" r="17"></circle>' +
+        '<text x="' + part.x + '" y="' + (part.y + 1) + '">' + part.n + "</text></g>";
+    }).join("");
+    $("part-list").innerHTML = PARTS.map(function (part) {
+      return '<button type="button" class="part-btn" data-part="' + part.n + '"><span class="part-n">' + part.n + "</span>" + esc(part.name) + "</button>";
+    }).join("");
+    function pick(event) {
+      var element = event.target.closest ? event.target.closest("[data-part]") : null;
+      if (!element) { return; }
+      if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") { return; }
+      if (event.type === "keydown") { event.preventDefault(); }
+      activePart = parseInt(element.getAttribute("data-part"), 10);
+      renderPart();
+    }
+    $("hotspots").addEventListener("click", pick);
+    $("hotspots").addEventListener("keydown", pick);
+    $("part-list").addEventListener("click", pick);
+    $("zoom").addEventListener("input", function () {
+      var zoom = parseInt($("zoom").value, 10);
+      $("car-big").style.width = zoom + "%";
+      $("zoom-out").textContent = zoom + " %";
+    });
+    renderPart();
+  }
+
+  /* ============ Pestañas (#recorrido, #variables, #simulador, #auto) ============ */
+  var VIEWS = ["recorrido", "variables", "simulador", "auto"];
+  function showView(name) {
+    if (VIEWS.indexOf(name) === -1) { name = "recorrido"; }
+    VIEWS.forEach(function (view) {
+      $("vista-" + view).hidden = view !== name;
+      $("tab-" + view).setAttribute("aria-selected", view === name ? "true" : "false");
+    });
+  }
+  function viewFromHash() { return (window.location.hash || "").replace("#", ""); }
+
+  /* ============ Arranque ============ */
+  renderFlow();
+  select(current, "init");
+  setupSim();
+  setupCar();
+  showView(viewFromHash());
+
+  flow.addEventListener("click", function (event) {
+    var button = event.target.closest ? event.target.closest(".node") : null;
+    if (button) { select(button.getAttribute("data-node"), "click"); }
+  });
+  $("btn-prev").addEventListener("click", function () { move(-1); });
+  $("btn-next").addEventListener("click", function () { move(1); });
+  document.addEventListener("keydown", function (event) {
+    if ($("vista-recorrido").hidden) { return; }
+    if (event.altKey || event.ctrlKey || event.metaKey) { return; }
+    var tag = event.target && event.target.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") { return; }
+    if (event.key === "ArrowRight") { move(1); event.preventDefault(); }
+    if (event.key === "ArrowLeft") { move(-1); event.preventDefault(); }
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (tab) {
+    tab.addEventListener("click", function () {
+      var name = tab.getAttribute("data-view");
+      showView(name);
+      try { window.location.hash = name; } catch (error) { /* la vista ya cambió */ }
+    });
+  });
+  window.addEventListener("hashchange", function () { showView(viewFromHash()); });
+})();
+</script>
+</html>
