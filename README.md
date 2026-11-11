@@ -85,7 +85,9 @@ Entrenamiento con las temporadas 2014 a 2023 (4.147 filas) y prueba con la tempo
 
 ## Página interactiva
 
-`web/index.html` se abre con doble clic. Tiene cuatro secciones: el recorrido del flujo paso a paso, las variables, un simulador de la función de inferencia y un auto de F1 explicado por partes.
+Publicada en https://dayanp3.github.io/f1-prediccion-podio/web/ (no requiere instalar nada). También se puede abrir `web/index.html` con doble clic.
+
+Tiene cuatro secciones: el recorrido del flujo paso a paso, las variables, un simulador de la función de inferencia y un auto de F1 explicado por partes.
 
 ## Estructura
 
@@ -107,6 +109,6 @@ F1/
 
 Python, SQLite, pandas, scikit-learn y openpyxl. Desarrollado con apoyo de Claude como agente de IA.
 
-## Autor
+## Autores
 
-Dayan Gómez - Ingeniería de Sistemas, Institución Universitaria del Putumayo.
+Dayan Gómez, Sebastián Maigual y Kevin Erazo - Ingeniería de Sistemas, Institución Universitaria del Putumayo.

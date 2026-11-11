@@ -25,6 +25,9 @@
   --yellow: #f5c542;
   --yellow-soft: #3a2e0e;
   --code-bg: #090a0d;
+  --p1: #6fb1ff;
+  --p2: #ffb454;
+  --p3: #4fd6b0;
   /* La banda y el escenario del auto son siempre oscuros, en ambos temas */
   --band-bg: #0b0c0f;
   --band-ink: #f3f4f6;
@@ -54,7 +57,7 @@
     --bg: #f0f1f3; --surface: #ffffff; --surface-2: #f5f6f8; --ink: #14161b; --muted: #596070;
     --line: #d5d8df; --line-strong: #979dab; --accent: #d42a20; --accent-soft: #fbe6e4;
     --purple: #6f35c9; --green: #157a45; --green-soft: #dff2e6; --yellow: #8a6200; --yellow-soft: #faefd0;
-    --code-bg: #eceef2;
+    --code-bg: #eceef2; --p1: #1c63c4; --p2: #9a5a00; --p3: #0c7a5e;
     color-scheme: light;
   }
 }
@@ -62,7 +65,7 @@
   --bg: #f0f1f3; --surface: #ffffff; --surface-2: #f5f6f8; --ink: #14161b; --muted: #596070;
   --line: #d5d8df; --line-strong: #979dab; --accent: #d42a20; --accent-soft: #fbe6e4;
   --purple: #6f35c9; --green: #157a45; --green-soft: #dff2e6; --yellow: #8a6200; --yellow-soft: #faefd0;
-  --code-bg: #eceef2;
+  --code-bg: #eceef2; --p1: #1c63c4; --p2: #9a5a00; --p3: #0c7a5e;
   color-scheme: light;
 }
 
@@ -268,7 +271,25 @@ pre code { background: none; padding: 0; font-size: inherit; }
 .term dd { color: var(--muted); }
 .term .vname { color: var(--purple); }
 
+/* ---------- Expositores ---------- */
+.who-p1 { --who: var(--p1); } .who-p2 { --who: var(--p2); } .who-p3 { --who: var(--p3); }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--who); display: inline-block; flex: none; }
+.roster { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.who-card { text-align: left; background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--who); border-radius: 6px; padding: 11px 14px 12px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.who-card:hover { border-color: var(--who); }
+.who-card.is-current { border-color: var(--who); box-shadow: 0 0 0 2px color-mix(in srgb, var(--who) 35%, transparent); }
+.who-name { font-family: var(--font-display); font-weight: 700; font-size: 19px; line-height: 1.2; }
+.who-range { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
+.who-topic { font-size: 13.5px; color: var(--muted); }
+.node-who { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-top: 2px; }
+.node.is-data .node-who { color: color-mix(in srgb, var(--bg) 70%, var(--ink)); }
+.node.is-active .node-who { color: var(--muted); }
+.panel-top { display: flex; align-items: center; justify-content: space-between; gap: 8px 14px; flex-wrap: wrap; }
+.panel-who, .who-line { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; font-size: 14px; }
+.who-line { align-self: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px 4px 10px; }
+
 @media (max-width: 860px) {
+  .roster { grid-template-columns: minmax(0, 1fr); }
   .band-top, .split, .sim, .parts { grid-template-columns: minmax(0, 1fr); }
   .panel, .result { position: static; max-height: none; }
   .tab { padding: 10px 12px 11px; font-size: 14.5px; }
@@ -362,7 +383,7 @@ pre code { background: none; padding: 0; font-size: inherit; }
       <div class="headline">
         <p class="eyebrow"><b>///</b> Inteligencia de Negocios · Modelo predictivo</p>
         <h1>¿Terminará este piloto en el podio?</h1>
-        <p class="lede">El recorrido completo de los datos de Fórmula 1: de una base con 14 tablas a una sola pregunta de sí o no, y de ahí a la decisión de apostar.</p>
+        <p class="lede">De una base con 14 tablas a una decisión: apostar o no apostar.</p>
         <div class="gantry" aria-live="polite">
           <div class="lights" id="lights" role="img" aria-label="Etapa actual del recorrido">
             <span class="light"></span><span class="light"></span><span class="light"></span><span class="light"></span><span class="light"></span>
@@ -385,7 +406,8 @@ pre code { background: none; padding: 0; font-size: inherit; }
 <main class="wrap">
   <!-- ================= RECORRIDO ================= -->
   <section class="view" id="vista-recorrido" role="tabpanel" aria-labelledby="tab-recorrido">
-    <p class="hint">Haz clic en cualquier bloque para ver qué significa y qué hicimos ahí. Para exponer, avanza con los botones o con las flechas ← → del teclado: el semáforo de arriba enciende una luz por cada etapa. Los ejemplos siguen un mismo dato, Lando Norris en el GP de Abu Dabi 2024.</p>
+    <div class="roster" id="roster" role="group" aria-label="Quién expone cada parte"></div>
+    <p class="hint">Haz clic en un bloque o avanza con las flechas ← → del teclado. Los ejemplos siguen un mismo dato: Lando Norris en el GP de Abu Dabi 2024.</p>
     <div class="split">
       <div class="flow" id="flow"></div>
       <aside class="panel" id="panel" aria-live="polite">
@@ -401,10 +423,11 @@ pre code { background: none; padding: 0; font-size: inherit; }
 
   <!-- ================= VARIABLES ================= -->
   <section class="view" id="vista-variables" role="tabpanel" aria-labelledby="tab-variables" hidden>
+    <p class="who-line" data-who="p2"></p>
     <div class="stack">
       <div class="sec">
         <h2>Variable dependiente: lo que el modelo predice</h2>
-        <p>Es la respuesta que queremos adivinar antes de la carrera. Solo tiene dos valores posibles, por eso se puede usar regresión logística.</p>
+        <p>Lo que se quiere adivinar antes de la carrera. Tiene solo dos valores, por eso sirve la regresión logística.</p>
         <div class="target">
           <div>
             <span class="label">Dependiente (y)</span>
@@ -420,7 +443,7 @@ pre code { background: none; padding: 0; font-size: inherit; }
 
       <div class="sec">
         <h2>Variables independientes: lo que se sabe antes de largar</h2>
-        <p>Son los datos con los que el modelo calcula la probabilidad. Todas se conocen antes de que empiece la carrera. El ejemplo es Lando Norris en el GP de Abu Dabi 2024.</p>
+        <p>Los datos que el modelo usa para calcular la probabilidad. Ejemplo: Lando Norris en el GP de Abu Dabi 2024.</p>
         <div class="card scroll">
           <table>
             <thead>
@@ -435,12 +458,12 @@ pre code { background: none; padding: 0; font-size: inherit; }
             </tbody>
           </table>
         </div>
-        <p>Un número negativo significa que entre más bajo el valor (mejor puesto), más probable es el podio. El peso en el modelo es el coeficiente de la regresión logística con las variables ya escaladas: la posición de salida pesa cuatro veces más que cualquier otra.</p>
+        <p>Número negativo: entre mejor el puesto, más probable el podio. El peso es el coeficiente del modelo: la posición de salida pesa 4 veces más que cualquier otra.</p>
       </div>
 
       <div class="sec">
         <h2>Por qué manda la posición de salida</h2>
-        <p>Porcentaje de veces que un piloto hizo podio según el puesto de la parrilla desde el que salió, entre 2014 y 2024.</p>
+        <p>Porcentaje de pilotos que hicieron podio según su puesto de salida, de 2014 a 2024.</p>
         <div class="grid-lane" role="list">
           <div class="slot is-podium" role="listitem"><span class="slot-pos">P1</span><span class="slot-pct">80,7 %</span></div>
           <div class="slot is-podium" role="listitem"><span class="slot-pos">P2</span><span class="slot-pct">71,2 %</span></div>
@@ -451,12 +474,12 @@ pre code { background: none; padding: 0; font-size: inherit; }
           <div class="slot" role="listitem"><span class="slot-pos">P7</span><span class="slot-pct">6,6 %</span></div>
           <div class="slot" role="listitem"><span class="slot-pos">P8</span><span class="slot-pct">3,1 %</span></div>
         </div>
-        <p class="grid-foot">Los cajones en rojo son los que usa la regla simple de comparación (baseline): decir que hacen podio los 3 primeros de la parrilla. De los 79 pilotos que salieron desde el pit lane, ninguno hizo podio.</p>
+        <p class="grid-foot">En rojo, los 3 puestos que usa la regla simple de comparación (baseline). Desde el pit lane, ninguno de los 79 hizo podio.</p>
       </div>
 
       <div class="sec">
         <h2>Columnas que no entran al modelo</h2>
-        <p>Ocurren durante o después de la carrera. Si el modelo las viera estaría haciendo trampa, porque ya conocería el resultado. Eso se llama fuga de datos.</p>
+        <p>Ocurren durante o después de la carrera. Usarlas sería fuga de datos: el modelo ya conocería el resultado.</p>
         <div class="card scroll">
           <table>
             <thead><tr><th>Columna</th><th>Qué es</th><th>Por qué se excluye</th></tr></thead>
@@ -492,7 +515,8 @@ pre code { background: none; padding: 0; font-size: inherit; }
 
   <!-- ================= SIMULADOR ================= -->
   <section class="view" id="vista-simulador" role="tabpanel" aria-labelledby="tab-simulador" hidden>
-    <p class="hint">Esta es la función de inferencia funcionando en vivo con el modelo entrenado. Mueve los datos de un piloto antes de la carrera y mira cómo cambian la probabilidad y la decisión.</p>
+    <p class="who-line" data-who="p3"></p>
+    <p class="hint">La función de inferencia en vivo. Mueve los datos de un piloto y mira cómo cambian la probabilidad y la decisión.</p>
     <div class="presets" id="presets" role="group" aria-label="Casos de ejemplo"></div>
     <div class="sim">
       <div class="controls">
@@ -537,7 +561,7 @@ pre code { background: none; padding: 0; font-size: inherit; }
             </table>
           </div>
           <p class="formula" id="formula"></p>
-          <p class="real">Escalado = (valor − media) ÷ desviación. Aporte = escalado × coeficiente. Un aporte positivo sube la probabilidad y uno negativo la baja.</p>
+          <p class="real">Aporte = valor escalado × peso de la variable. Positivo sube la probabilidad; negativo la baja.</p>
         </div>
       </div>
     </div>
@@ -545,10 +569,11 @@ pre code { background: none; padding: 0; font-size: inherit; }
 
   <!-- ================= EL AUTO ================= -->
   <section class="view" id="vista-auto" role="tabpanel" aria-labelledby="tab-auto" hidden>
+    <p class="who-line" data-who="p1" data-prefix="Apoyo para el contexto inicial: "></p>
     <div class="stack">
       <div class="sec">
         <h2>Un Fórmula 1 por partes</h2>
-        <p>Toca un número para ver qué es cada parte. Con el control de zoom puedes acercarte y moverte por el dibujo. Es una ilustración propia, no el auto de un equipo real.</p>
+        <p>Toca un número para ver cada parte. Con el zoom puedes acercarte. Es una ilustración propia, no el auto de un equipo real.</p>
         <div class="garage">
           <div class="garage-bar">
             <label for="zoom">Zoom</label>
@@ -599,128 +624,125 @@ pre code { background: none; padding: 0; font-size: inherit; }
     { n: 5, title: "Explotación", script: "04_modelado_podio.py", rows: [["metricas", "inferencia"]] }
   ];
 
+  /* Reparto de la exposición: para cambiar quién expone qué, edita solo "from" y "to" (número de paso). */
+  var PRESENTERS = [
+    { key: "p1", name: "Dayan Gómez", short: "Dayan", from: 1, to: 6, topic: "De dónde salen los datos y cómo se revisaron" },
+    { key: "p2", name: "Sebastián Maigual", short: "Sebastián", from: 7, to: 11, topic: "Cómo se armó la matriz y sus variables" },
+    { key: "p3", name: "Kevin Erazo", short: "Kevin", from: 12, to: 16, topic: "El modelo, sus resultados y la decisión" }
+  ];
+
   var NODES = {
     db: {
       title: "f1.sqlite", sub: "20,9 MB · 14 tablas", data: true,
-      simple: "Un almacén transaccional es la base de datos tal como la guarda el sistema original: muchas tablas pequeñas conectadas entre sí por números de identificación (IDs). Está hecha para registrar datos, no para analizarlos.",
-      did: ["Descargamos de Kaggle el dataset Formula 1 World Championship (1950 a 2024), que viene en 14 archivos CSV.", "Los cargamos en un solo archivo SQLite con el script 01_cargar_sqlite.py.", "El dataset marca los datos faltantes con \\N. Al cargar, esa marca se convierte en nulos reales."],
+      simple: "La base de datos original: 14 tablas conectadas por IDs. Sirve para registrar datos, no para analizarlos.",
+      did: ["Descargamos de Kaggle el dataset de F1 (1950 a 2024): 14 archivos CSV.", "Los cargamos en un solo archivo SQLite."],
       facts: [["Tablas", "14"], ["Filas en total", "701.433"], ["Peso", "20,9 MB"], ["Carreras", "1.125"]],
       code: "python src/01_cargar_sqlite.py"
     },
     results: {
       title: "Tabla results", sub: "26.759 filas · 18 columnas",
-      simple: "Es la tabla central. Cada fila es un piloto en una carrera: desde qué puesto salió y en qué puesto terminó.",
-      did: ["De aquí salen la posición de salida y el resultado final, con el que sabemos si hubo podio.", "El problema es que no se puede leer: el piloto, la escudería y la carrera aparecen como números."],
-      tables: [{ tag: EJEMPLO, caption: "Así se ve la fila en el almacén. ¿Quién es el piloto 846?", head: ["resultId", "raceId", "driverId", "constructorId", "grid", "positionOrder"], rows: [["26745", "1144", "846", "1", "1", "1"]] }]
+      simple: "La tabla central: una fila por cada piloto en cada carrera.",
+      did: ["Trae el puesto de salida y el puesto final.", "Problema: piloto, escudería y carrera son solo números."],
+      tables: [{ tag: EJEMPLO, caption: "La fila en el almacén. ¿Quién es el piloto 846?", head: ["resultId", "raceId", "driverId", "constructorId", "grid", "positionOrder"], rows: [["26745", "1144", "846", "1", "1", "1"]] }]
     },
     catalogos: {
       title: "Catálogos", sub: "races, drivers, constructors",
-      simple: "Son las tablas que traducen cada ID a un nombre que una persona puede leer.",
+      simple: "Las tablas que traducen cada ID a un nombre.",
       facts: [["races", "1.125 carreras"], ["drivers", "861 pilotos"], ["constructors", "212 escuderías"]],
-      tables: [{ tag: EJEMPLO, caption: "Los catálogos responden la pregunta anterior.", head: ["ID", "Tabla", "Significa"], rows: [["driverId 846", "drivers", "Lando Norris"], ["constructorId 1", "constructors", "McLaren"], ["raceId 1144", "races", "Abu Dhabi Grand Prix, 8 dic 2024"]] }]
+      tables: [{ tag: EJEMPLO, caption: "Los catálogos responden la pregunta.", head: ["ID", "Tabla", "Significa"], rows: [["driverId 846", "drivers", "Lando Norris"], ["constructorId 1", "constructors", "McLaren"], ["raceId 1144", "races", "Abu Dhabi Grand Prix, 8 dic 2024"]] }]
     },
     campeonato: {
       title: "Tablas de campeonato", sub: "driver_standings, constructor_standings",
-      simple: "Guardan cuántos puntos llevaba cada piloto y cada escudería después de cada carrera.",
-      did: ["Las usamos para saber con cuántos puntos llegaba cada uno a una carrera. Para eso tomamos la tabla tal como quedó al terminar la carrera anterior."],
+      simple: "Los puntos que llevaba cada piloto y cada escudería después de cada carrera.",
+      did: ["Tomamos los puntos tal como estaban al terminar la carrera anterior."],
       facts: [["driver_standings", "34.863 filas"], ["constructor_standings", "13.391 filas"]],
-      tables: [{ tag: EJEMPLO, caption: "Cómo estaba el campeonato tras el GP de Qatar, la carrera anterior.", head: ["Quién", "Puntos tras Qatar"], rows: [["Lando Norris", "349"], ["McLaren", "640"]] }]
+      tables: [{ tag: EJEMPLO, caption: "El campeonato tras el GP de Qatar, la carrera anterior.", head: ["Quién", "Puntos"], rows: [["Lando Norris", "349"], ["McLaren", "640"]] }]
     },
     auditoria: {
       title: "Auditoría", sub: "02_auditoria.py",
-      simple: "Antes de usar los datos hay que revisarlos: ¿faltan valores?, ¿hay cosas imposibles?, ¿las tablas se conectan bien? Un modelo entrenado con datos malos da recomendaciones malas.",
-      did: ["Llaves entre tablas: 0 huérfanos. Todo piloto, escudería y carrera de results existe en su catálogo.", "10.953 filas sin posición final (40,9 %): pilotos que no terminaron la carrera.", "1.638 filas con posición de salida 0, que no es un puesto real: el piloto salió desde el pit lane o no largó.", "85 casos de un piloto repetido en la misma carrera (1950 a 1978) y 18 carreras con más de 3 pilotos en el podio (1950 a 1960)."],
-      note: "Conclusión: los problemas graves están en las temporadas antiguas. Eso guía el filtro del siguiente paso.",
-      code: "python src/02_auditoria.py\n# El reporte queda en docs/auditoria.txt"
+      simple: "Revisar los datos antes de usarlos: con datos malos, el modelo predice mal.",
+      did: ["Llaves entre tablas: 0 errores.", "1.638 filas con salida 0, que no es un puesto real (pit lane o no largó).", "Pilotos repetidos y podios de más de 3: solo entre 1950 y 1978."],
+      note: "Conclusión: los problemas están en las temporadas antiguas.",
+      code: "python src/02_auditoria.py"
     },
     filtro: {
       title: "Filtro: 2014 a 2024", sub: "4.626 filas · 228 carreras · 11 temporadas",
-      simple: "No usamos toda la historia. Elegimos un periodo donde los datos están limpios y las reglas del deporte son comparables, igual que en clase se usó solo la Premier League.",
-      did: ["Nos quedamos con la era híbrida de la F1, de 2014 a 2024.", "En ese rango no hay pilotos repetidos ni podios raros, y todas las filas tienen datos de campeonato."],
+      simple: "Nos quedamos con un periodo de datos limpios y autos comparables: la era híbrida.",
+      did: ["Sin pilotos repetidos ni podios raros.", "En clase el filtro fue la Premier League; aquí son las temporadas."],
       facts: [["Filas", "4.626"], ["Carreras", "228"], ["Pilotos", "59"], ["Escuderías", "20"]],
       code: "WHERE ra.year BETWEEN 2014 AND 2024"
     },
     join: {
       title: "JOIN", sub: "results + races + drivers + constructors",
-      simple: "Un JOIN une dos tablas usando el ID que comparten. Así cada fila deja de ser una lista de números y pasa a tener nombres.",
-      did: ["Entraron 4.626 filas y salieron 4.626: el cruce no perdió ni duplicó nada."],
+      simple: "Une las tablas por su ID: los números pasan a ser nombres.",
+      did: ["Entraron 4.626 filas y salieron 4.626: no se perdió ni se duplicó nada."],
       code: "FROM results r\nJOIN races ra       ON ra.raceId = r.raceId\nJOIN drivers d      ON d.driverId = r.driverId\nJOIN constructors c ON c.constructorId = r.constructorId",
-      tables: [{ tag: EJEMPLO, caption: "La misma fila, antes y después del JOIN.", head: ["", "Carrera", "Piloto", "Escudería"], rows: [["Antes", "1144", "846", "1"], ["Después", "Abu Dhabi Grand Prix", "Lando Norris", "McLaren"]] }]
+      tables: [{ tag: EJEMPLO, caption: "La misma fila, antes y después.", head: ["", "Carrera", "Piloto", "Escudería"], rows: [["Antes", "1144", "846", "1"], ["Después", "Abu Dhabi Grand Prix", "Lando Norris", "McLaren"]] }]
     },
     calculo: {
       title: "Cálculo de variables", sub: "solo datos previos a la carrera",
-      simple: "El modelo solo puede usar información que se conoce antes de que empiece la carrera. Si le damos algo que ocurre después, como los puntos que ganó ese día, haría trampa. Eso se llama fuga de datos.",
-      did: ["puntos_piloto_previos y puntos_escuderia_previos: puntos del campeonato al terminar la carrera anterior.", "podios_ultimas_5: podios del piloto en sus 5 carreras anteriores.", "pos_promedio_ultimas_5: puesto final promedio en esas 5 carreras.", "podio: 1 si terminó entre los 3 primeros. Es la variable que se va a predecir."],
-      tables: [{ tag: EJEMPLO, caption: "Norris venía de terminar 4.º, 2.º, 6.º, 6.º y 10.º: un podio y un promedio de 5,6.", head: ["puntos_piloto_previos", "puntos_escuderia_previos", "podios_ultimas_5", "pos_promedio_ultimas_5"], rows: [["349", "640", "1", "5,6"]] }]
+      simple: "El modelo solo puede usar lo que se sabe antes de la carrera. Usar datos posteriores sería fuga de datos.",
+      did: ["Puntos de piloto y escudería: los de la carrera anterior.", "Forma reciente: podios y puesto promedio de sus últimas 5 carreras.", "podio: 1 si terminó entre los 3 primeros. Es lo que se predice."],
+      tables: [{ tag: EJEMPLO, caption: "Norris venía de terminar 4.º, 2.º, 6.º, 6.º y 10.º.", head: ["puntos_piloto_previos", "puntos_escuderia_previos", "podios_ultimas_5", "pos_promedio_ultimas_5"], rows: [["349", "640", "1", "5,6"]] }]
     },
     nulos: {
       title: "Nulos reales", sub: "79 salidas en 0 · 38 debutantes",
-      simple: "Un nulo es un dato que falta. El modelo no puede trabajar con huecos, así que hay que detectarlos y decidir qué hacer con ellos.",
-      did: ["En el ejemplo de clase se inyectaron 47 nulos a mano para practicar (1,55 %). Nuestro dataset ya los trae.", "79 filas (1,71 %) tienen posición de salida 0. Las marcamos como nulo.", "38 filas (0,82 %) son de pilotos debutantes: no tienen carreras anteriores, así que su promedio no existe."],
-      facts: [["posicion_salida", "79 nulos"], ["pos_promedio_ultimas_5", "38 nulos"]],
-      note: "En el ETL los nulos solo se marcan. Se rellenan más adelante, en el pipeline."
+      simple: "Un nulo es un dato que falta. Aquí son reales, no inyectados.",
+      did: ["79 filas (1,71 %) con salida 0: se marcan como nulo.", "38 filas (0,82 %) de debutantes: no tienen carreras previas."],
+      note: "En clase se inyectaron 47 nulos a mano (1,55 %)."
     },
     csv: {
       title: "pilotos_analitica.csv", sub: "431 KB · 4.626 filas × 14 columnas", data: true,
-      simple: "Los modelos predictivos no leen bases con muchas tablas. Necesitan una sola tabla plana, donde cada fila es un caso y cada columna es una variable.",
-      did: ["El script 03_etl.py termina guardando esta tabla. Cada fila es un piloto en una carrera.", "Tiene 7 columnas de identificación, 5 variables independientes, 1 de referencia y 1 objetivo."],
+      simple: "Una sola tabla plana: cada fila es un piloto en una carrera y cada columna, una variable.",
+      did: ["5 variables independientes, 1 objetivo y 8 columnas de apoyo."],
       facts: [["Filas", "4.626"], ["Columnas", "14"], ["Podio", "684 · 14,79 %"], ["No podio", "3.942 · 85,21 %"]],
       code: "python src/03_etl.py",
-      tables: [{ tag: EJEMPLO, caption: "La fila completa, lista para el modelo.", head: ["piloto", "escuderia", "posicion_salida", "puntos_piloto_previos", "puntos_escuderia_previos", "podios_ultimas_5", "pos_promedio_ultimas_5", "podio"], rows: [["Lando Norris", "McLaren", "1", "349", "640", "1", "5,6", "1"]] }]
+      tables: [{ tag: EJEMPLO, caption: "La fila lista para el modelo.", head: ["piloto", "posicion_salida", "puntos_piloto_previos", "puntos_escuderia_previos", "podios_ultimas_5", "pos_promedio_ultimas_5", "podio"], rows: [["Lando Norris", "1", "349", "640", "1", "5,6", "1"]] }]
     },
     imputacion: {
       title: "Imputación de nulos", sub: "mediana = 11",
-      simple: "Imputar es rellenar un dato que falta con un valor razonable. La mediana es el valor que queda en el centro al ordenar todos los datos, y no se deja arrastrar por valores extremos.",
-      did: ["Los 79 nulos de posicion_salida se rellenaron con 11, la mediana de esa columna.", "Los 38 nulos de pos_promedio_ultimas_5 se rellenaron con 11,0.", "Las medianas se calcularon solo con los datos de entrenamiento, para no usar información del futuro."],
-      facts: [["Mediana de posicion_salida", "11"], ["Mediana de pos_promedio_ultimas_5", "11,0"]],
-      code: "SimpleImputer(strategy=\"median\")",
-      note: "Limitación: quien sale del pit lane en realidad arranca último, y la mediana lo ubica a mitad de parrilla. Seguimos el método visto en clase y lo dejamos anotado."
+      simple: "Rellenar los datos que faltan con la mediana, el valor del centro.",
+      did: ["Los 79 nulos de posicion_salida se rellenan con 11.", "Los 38 de pos_promedio_ultimas_5, con 11,0.", "La mediana se calcula solo con los datos de entrenamiento."],
+      note: "Limitación: quien sale del pit lane arranca último, no en el puesto 11."
     },
     split: {
       title: "Split cronológico", sub: "Train 2014 a 2023 · Test 2024",
-      simple: "Para saber si el modelo sirve, se entrena con una parte de los datos y se pone a prueba con otra que nunca vio. Como las carreras ocurren en el tiempo, se entrena con el pasado y se prueba con el futuro.",
-      did: ["Entrenamos con las temporadas 2014 a 2023 y probamos con la temporada 2024 completa.", "Si se mezclara al azar, el modelo vería carreras de 2024 para predecir carreras de 2023. Eso es una fuga temporal."],
-      facts: [["Train 2014 a 2023", "4.147 filas"], ["Podios en train", "14,76 %"], ["Test 2024", "479 filas"], ["Podios en test", "15,03 %"]]
+      simple: "Se entrena con el pasado y se prueba con el futuro.",
+      did: ["Mezclar al azar sería fuga temporal: usar 2024 para predecir 2023."],
+      facts: [["Train 2014 a 2023", "4.147 filas"], ["Test 2024", "479 filas"]]
     },
     scaler: {
       title: "StandardScaler", sub: "se ajusta en train, se aplica en test",
-      simple: "Las variables tienen escalas muy distintas: la posición va de 1 a 22 y los puntos de escudería llegan a 822. El escalado las pone todas en la misma escala para que ninguna pese más solo por tener números grandes.",
-      did: ["El escalador se ajustó solo con los datos de entrenamiento y luego se aplicó al conjunto de prueba.", "Cada valor pasa a decir cuántas desviaciones está por encima o por debajo de la media."],
-      tables: [
-        { caption: "Media y desviación de cada variable en train.", head: ["Variable", "Media", "Desviación"], rows: [["posicion_salida", "10,57", "5,79"], ["puntos_piloto_previos", "49,18", "72,35"], ["puntos_escuderia_previos", "98,37", "140,22"], ["podios_ultimas_5", "0,73", "1,33"], ["pos_promedio_ultimas_5", "10,63", "4,29"]] },
-        { tag: EJEMPLO, caption: "Norris salía 1.º: (1 − 10,57) ÷ 5,79 = −1,65. Está 1,65 desviaciones por delante del promedio.", head: ["posicion_salida", "Escalado"], rows: [["1", "−1,65"]] }
-      ],
-      code: "StandardScaler()"
+      simple: "Pone todas las variables en la misma escala, para que ninguna pese más solo por tener números grandes.",
+      did: ["La posición va de 1 a 22; los puntos de escudería llegan a 822.", "Se ajusta solo con train y luego se aplica a test."],
+      tables: [{ tag: EJEMPLO, caption: "Norris salía 1.º: (1 − 10,57) ÷ 5,79 = −1,65.", head: ["posicion_salida", "Media", "Desviación", "Escalado"], rows: [["1", "10,57", "5,79", "−1,65"]] }]
     },
     modelo: {
       title: "Regresión logística", sub: "solver = lbfgs",
-      simple: "Es un modelo de clasificación. Recibe las variables y devuelve una probabilidad entre 0 y 1, con una curva en forma de S llamada función sigmoide. Aquí es la probabilidad de que el piloto termine en el podio.",
-      did: ["Se entrenó con las 4.147 filas de 2014 a 2023.", "El modelo aprendió un peso (coeficiente) para cada variable. Positivo sube la probabilidad de podio; negativo la baja."],
-      tables: [{ caption: "Lo que aprendió el modelo.", head: ["Variable", "Coeficiente"], rows: [["posicion_salida", "−1,919"], ["puntos_piloto_previos", "0,114"], ["puntos_escuderia_previos", "0,068"], ["podios_ultimas_5", "0,374"], ["pos_promedio_ultimas_5", "−0,479"], ["Intercepto", "−3,561"]] }],
-      note: "La posición de salida pesa cuatro veces más que cualquier otra variable: salir adelante es lo que más acerca al podio.",
-      code: "LogisticRegression(solver=\"lbfgs\")"
+      simple: "Devuelve una probabilidad entre 0 y 1: la de terminar en el podio.",
+      did: ["Entrenada con 4.147 filas (2014 a 2023).", "Aprende un peso por variable: positivo sube la probabilidad, negativo la baja."],
+      tables: [{ caption: "Lo que aprendió el modelo.", head: ["Variable", "Peso"], rows: [["posicion_salida", "−1,919"], ["puntos_piloto_previos", "0,114"], ["puntos_escuderia_previos", "0,068"], ["podios_ultimas_5", "0,374"], ["pos_promedio_ultimas_5", "−0,479"]] }],
+      note: "La posición de salida pesa 4 veces más que cualquier otra variable."
     },
     metricas: {
       title: "Métricas", sub: "ROC-AUC 0,925 · baseline 0,921",
-      simple: "La matriz de confusión cuenta los aciertos y los errores de cada tipo. El ROC-AUC mide qué tan bien separa el modelo a los que hacen podio de los que no: 0,5 es adivinar y 1 es perfecto.",
-      did: ["Se evaluó con la temporada 2024: 479 filas y 72 podios reales.", "Se comparó contra una regla simple (baseline): decir que hacen podio los 3 primeros de la parrilla."],
-      facts: [["ROC-AUC del modelo", "0,925"], ["ROC-AUC del baseline", "0,921"]],
+      simple: "Qué tan bien predice el modelo, comparado con una regla simple.",
+      did: ["Prueba: temporada 2024, 479 filas y 72 podios.", "Baseline: decir que hacen podio los 3 primeros de la parrilla."],
       tables: [
-        { caption: "Matriz de confusión con umbral 0,50.", head: ["", "Predijo no podio", "Predijo podio"], rows: [["Real: no podio", "383", "24"], ["Real: podio", "28", "44"]] },
-        { caption: "Comparación de estrategias en 2024.", head: ["Estrategia", "Exactitud", "Precisión", "Recall", "F1"], rows: [["Nadie hace podio", "0,850", "0", "0", "0"], ["Los 3 primeros de la parrilla", "0,900", "0,667", "0,667", "0,667"], ["Modelo, umbral 0,50", "0,891", "0,647", "0,611", "0,629"], ["Modelo, umbral 0,60", "0,889", "0,667", "0,528", "0,589"]] }
+        { caption: "Comparación en 2024.", head: ["Estrategia", "Exactitud", "F1", "ROC-AUC"], rows: [["Nadie hace podio", "0,850", "0", "—"], ["Los 3 primeros de la parrilla", "0,900", "0,667", "0,921"], ["Modelo, umbral 0,50", "0,891", "0,629", "0,925"]] },
+        { caption: "Matriz de confusión del modelo (umbral 0,50).", head: ["", "Predijo no podio", "Predijo podio"], rows: [["Real: no podio", "383", "24"], ["Real: podio", "28", "44"]] }
       ],
-      note: "Resultado: el modelo queda prácticamente empatado con la regla de los 3 primeros de la parrilla. Lo que aporta es una probabilidad para cualquier piloto, que es lo que necesita la función de inferencia."
+      note: "Resultado: empate con la regla simple. El modelo aporta la probabilidad, que es lo que se necesita para decidir."
     },
     inferencia: {
       title: "Función de inferencia", sub: "p ≥ 0,60 → apostar al podio",
-      simple: "Es el paso prescriptivo: convertir la probabilidad en una decisión. Si el modelo da 60 % o más de probabilidad de podio, se apuesta. Si da menos, no.",
-      did: ["La función predecir_podio recibe los 5 datos de un piloto antes de la carrera y devuelve la probabilidad y la decisión.", "En 2024 el modelo habría apostado 57 veces con este umbral y acertado 38 (66,7 %)."],
+      simple: "Convierte la probabilidad en una decisión: con 60 % o más, se apuesta.",
+      did: ["En 2024 habría apostado 57 veces y acertado 38 (66,7 %)."],
       tables: [
-        { caption: "Tres casos de prueba.", head: ["Caso", "Probabilidad", "Decisión"], rows: [["Sale 1.º, líder del campeonato, 4 podios seguidos", "88,9 %", "Apostar"], ["Sale 4.º, buen equipo, 2 podios recientes", "48,2 %", "No apostar"], ["Sale 15.º, equipo de media tabla, sin podios", "0,4 %", "No apostar"]] },
-        { tag: EJEMPLO, caption: "El modelo habría apostado por Norris. Resultado real: ganó la carrera.", head: ["Probabilidad", "Decisión", "Resultado real"], rows: [["72,7 %", "Apostar", "1.º"]] }
+        { caption: "Tres casos de prueba.", head: ["Caso", "Probabilidad", "Decisión"], rows: [["Sale 1.º, líder, 4 podios seguidos", "88,9 %", "Apostar"], ["Sale 4.º, 2 podios recientes", "48,2 %", "No apostar"], ["Sale 15.º, sin podios", "0,4 %", "No apostar"]] },
+        { tag: EJEMPLO, caption: "Resultado real: Norris ganó la carrera.", head: ["Probabilidad", "Decisión"], rows: [["72,7 %", "Apostar"]] }
       ],
-      note: "Puedes probarla con tus propios datos en la pestaña Simulador.",
-      code: "predecir_podio(modelo, posicion_salida=1, puntos_piloto_previos=349,\n               puntos_escuderia_previos=640, podios_ultimas_5=1,\n               pos_promedio_ultimas_5=5.6)"
+      note: "Se puede probar en vivo en la pestaña Simulador."
     }
   };
 
@@ -754,14 +776,40 @@ pre code { background: none; padding: 0; font-size: inherit; }
         html += '<div class="row">';
         row.forEach(function (id) {
           var node = NODES[id];
+          var stepNumber = ORDER.indexOf(id) + 1, who = presenterOf(stepNumber);
           html += '<button type="button" class="node' + (node.data ? " is-data" : "") + '" data-node="' + id + '" id="node-' + id + '">' +
-            '<span class="node-title">' + esc(node.title) + '</span><span class="node-sub">' + esc(node.sub) + "</span></button>";
+            '<span class="node-title">' + esc(node.title) + '</span><span class="node-sub">' + esc(node.sub) + "</span>" +
+            '<span class="node-who who-' + who.key + '"><span class="dot"></span>' + stepNumber + " · " + esc(who.short) + "</span></button>";
         });
         html += "</div>";
       });
       html += "</div>";
     });
     flow.innerHTML = html;
+  }
+
+  function presenterOf(stepNumber) {
+    for (var i = 0; i < PRESENTERS.length; i++) {
+      if (stepNumber >= PRESENTERS[i].from && stepNumber <= PRESENTERS[i].to) { return PRESENTERS[i]; }
+    }
+    return PRESENTERS[0];
+  }
+
+  function renderRoster() {
+    $("roster").innerHTML = PRESENTERS.map(function (who) {
+      return '<button type="button" class="who-card who-' + who.key + '" data-step="' + who.from + '">' +
+        '<span class="who-name">' + esc(who.name) + '</span><span class="who-range">Pasos ' + who.from + " a " + who.to + "</span>" +
+        '<span class="who-topic">' + esc(who.topic) + "</span></button>";
+    }).join("");
+    $("roster").addEventListener("click", function (event) {
+      var card = event.target.closest ? event.target.closest("[data-step]") : null;
+      if (card) { select(ORDER[parseInt(card.getAttribute("data-step"), 10) - 1], "nav"); }
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-who]"), function (line) {
+      var who = PRESENTERS.filter(function (item) { return item.key === line.getAttribute("data-who"); })[0];
+      line.className = "who-line who-" + who.key;
+      line.innerHTML = '<span class="dot"></span>' + esc(line.getAttribute("data-prefix") || "Expone: ") + esc(who.name);
+    });
   }
 
   function renderTable(table) {
@@ -775,10 +823,11 @@ pre code { background: none; padding: 0; font-size: inherit; }
   }
 
   function renderPanel(id) {
-    var node = NODES[id], stage = STAGE_OF[id];
-    var html = '<p class="panel-stage">Etapa ' + stage.n + " · " + esc(stage.title) + "</p>";
+    var node = NODES[id], stage = STAGE_OF[id], who = presenterOf(ORDER.indexOf(id) + 1);
+    var html = '<div class="panel-top"><p class="panel-stage">Etapa ' + stage.n + " · " + esc(stage.title) + "</p>" +
+      '<p class="panel-who who-' + who.key + '"><span class="dot"></span>Expone: ' + esc(who.name) + "</p></div>";
     html += "<h2>" + esc(node.title) + "</h2>";
-    html += '<div class="block"><h3>En palabras simples</h3><p class="simple">' + esc(node.simple) + "</p></div>";
+    html += '<div class="block"><h3>Qué es</h3><p class="simple">' + esc(node.simple) + "</p></div>";
     if (node.did) { html += '<div class="block"><h3>Qué hicimos</h3>' + list(node.did) + "</div>"; }
     if (node.facts) {
       html += '<dl class="facts">' + node.facts.map(function (fact) { return '<div class="fact"><dt>' + esc(fact[0]) + "</dt><dd>" + esc(fact[1]) + "</dd></div>"; }).join("") + "</dl>";
@@ -798,6 +847,8 @@ pre code { background: none; padding: 0; font-size: inherit; }
       button.setAttribute("aria-pressed", active ? "true" : "false");
     });
     STAGES.forEach(function (item) { $("stage-" + item.n).classList.toggle("is-current", item.n === stage.n); });
+    var currentWho = presenterOf(index + 1);
+    Array.prototype.forEach.call($("roster").children, function (card, i) { card.classList.toggle("is-current", PRESENTERS[i] === currentWho); });
     Array.prototype.forEach.call($("lights").children, function (light, i) { light.classList.toggle("on", i < stage.n); });
     $("gantry-text").innerHTML = "Etapa <b>" + stage.n + " de 5</b> · " + esc(stage.title);
     renderPanel(id);
@@ -978,6 +1029,7 @@ pre code { background: none; padding: 0; font-size: inherit; }
   function viewFromHash() { return (window.location.hash || "").replace("#", ""); }
 
   /* ============ Arranque ============ */
+  renderRoster();
   renderFlow();
   select(current, "init");
   setupSim();

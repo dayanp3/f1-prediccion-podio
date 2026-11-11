@@ -13,3 +13,6 @@ venv/
 ~$*
 Thumbs.db
 .DS_Store
+
+# Guia interna para preparar la exposicion
+docs/guia_exposicion.docx
